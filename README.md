@@ -1,4 +1,4 @@
-# VideoToAsciiConverter
+# Video To ASCII Converter (C#)
 Este projeto converte vídeos em arquivos ASCII em tempo real, exibindo-os em formato de texto gráfico. Utiliza OpenCV para processamento de vídeo e NAudio para reprodução de áudio sincronizada, quando disponível.
 
 ## Funcionalidades
