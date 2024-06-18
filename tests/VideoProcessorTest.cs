@@ -1,37 +1,37 @@
-﻿//using Emgu.CV;
+﻿using OpenCvSharp;
 
-//namespace VideoToAsciiConverter.tests
-//{
-//    internal class VideoProcessorTest
-//    {
-//        static void Main(string[] args)
-//        {
-//            const string videoPath = @"C:\Users\gusta\Documents\GitHub\video-to-ascii-converter\teste.mp4";
-//            VideoCapture cap = new VideoCapture(videoPath);
+namespace VideoToAsciiConverter.tests
+{
+    internal class VideoProcessorTest
+    {
+        static void Main(string[] args)
+        {
+            const string videoPath = @"C:\Users\gusta\Documents\GitHub\video-to-ascii-converter\teste.mp4";
+            VideoCapture cap = new VideoCapture(videoPath, VideoCaptureAPIs.ANY);
 
-//            if (!cap.IsOpened)
-//            {
-//                Console.WriteLine("Erro ao abrir o vídeo!");
-//                return;
-//            }
+            if (!cap.IsOpened())
+            {
+                Console.WriteLine("Erro ao abrir o vídeo!");
+                return;
+            }
 
-//            Mat frame = new Mat();
+            Mat frame = new Mat();
 
-//            while (true)
-//            {
-//                cap.Read(frame);
+            while (true)
+            {
+                cap.Read(frame);
 
-//                if (frame.IsEmpty)
-//                    break;
+                if (frame.Empty())
+                    break;
 
-//                CvInvoke.Imshow("Frame", frame);
+                Cv2.ImShow("Frame", frame);
 
-//                if (CvInvoke.WaitKey(30) == 27) // Pressione ESC para sair
-//                    break;
-//            }
+                if (Cv2.WaitKey(30) == 27) // Wait for 'ESC' key press for 30ms
+                    break;
+            }
 
-//            cap.Dispose();
-//            CvInvoke.DestroyAllWindows();
-//        }
-//    }
-//}
+            cap.Release();
+            Cv2.DestroyAllWindows();
+        }
+    }
+}
