@@ -1,16 +1,31 @@
-# Video To ASCII Converter (C#)
-Este projeto converte vídeos em arquivos ASCII em tempo real, exibindo-os em formato de texto gráfico. Utiliza OpenCV para processamento de vídeo e NAudio para reprodução de áudio sincronizada, quando disponível.
+# ASCII Video Player
 
-## Funcionalidades
-* Conversão em Tempo Real: Transforma vídeos em arquivos ASCII e exibe em formato de texto.
-* Suporte a Áudio: Reproduz áudio sincronizado com o vídeo, quando disponível.
+A C# application that reads a video frame by frame, converts each frame into ASCII characters based on pixel brightness, and renders the result in real time. It uses **OpenCV** for video processing and **NAudio** for synchronized audio playback when available.
 
-### Pré-requisitos:
-Instale o .NET Core SDK.
-Certifique-se de ter as bibliotecas OpenCvSharp4 e NAudio instaladas no ambiente.
+## Features
 
-## Licença
-Este projeto está licenciado sob a [LICENSE.md].
+* **Real-time conversion:** transforms video frames into ASCII and displays them as text.
+* **Audio support:** plays audio synchronized with the video, when available.
 
-## Notas:
-Este projeto foi desenvolvido como parte de aprendizado pessoal.
+## Tech Stack
+
+C#, .NET, OpenCvSharp4 and NAudio.
+
+## Prerequisites
+
+* .NET Core SDK installed
+* OpenCvSharp4 and NAudio libraries available in your environment
+
+## How to Run
+
+1. Clone the repository, restore the dependencies and run the project passing the path to a video file.
+```
+git clone https://github.com/guavovic/ascii-video-player.git
+```
+## License
+
+This project is licensed under the [MIT License](LICENSE.md).
+
+## Notes
+
+Developed as a personal learning project.
