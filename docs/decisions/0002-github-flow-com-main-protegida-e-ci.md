@@ -6,7 +6,7 @@ Status: Aceito
 
 ## Contexto
 
-Toda mudança era commitada direto na `main`, sem nada conferindo se o código ainda compilava. O projeto tem uma pessoa só mantendo e ainda não tem versões lançadas.
+Toda mudança era commitada direto na `main`, sem nada conferindo se o código ainda compilava. O projeto tem uma pessoa só mantendo. A v1 é o player como estava até aqui, e as mudanças a partir desta decisão formam a v2.
 
 ## Opções consideradas
 
@@ -23,7 +23,7 @@ GitHub Flow.
 - O workflow de CI (`.github/workflows/ci.yml`) faz o restore e o build em toda pull request e em todo push na `main`. Aviso de compilação quebra o build (`-warnaserror`), para problemas como o do campo de áudio nunca atribuído não passarem de novo.
 - O CI roda no Linux. O programa ainda só funciona no Windows, mas a compilação não depende do sistema. Quando o player for multiplataforma, o workflow ganha uma matriz com Windows, Linux e macOS.
 - O Dependabot acompanha os pacotes NuGet e as actions do workflow toda semana.
-- Versões lançadas, quando existirem, serão tags na `main`.
+- As versões são tags na `main` (`v1.0.0` marca o player antes destas mudanças, e a v2 sai como tag quando a trilha fechar), não uma branch `develop`.
 
 ## Consequências
 
