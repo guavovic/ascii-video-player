@@ -9,6 +9,8 @@
     <Version>2.0.0</Version>
     <AssemblyName>ascii-video-player</AssemblyName>
     <RootNamespace>AsciiVideoPlayer</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PredefinedCulturesOnly>false</PredefinedCulturesOnly>
   </PropertyGroup>
 
   <PropertyGroup>
