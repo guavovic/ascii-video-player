@@ -54,7 +54,7 @@ public sealed class FFmpegVideoSource : IVideoSource
     {
         if (!_process.HasExited)
         {
-            _process.Kill();
+            _process.Kill(entireProcessTree: true);
             _process.WaitForExit();
         }
 

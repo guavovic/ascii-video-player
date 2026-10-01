@@ -104,7 +104,7 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
 
         if (!_decoder.HasExited)
         {
-            _decoder.Kill();
+            _decoder.Kill(entireProcessTree: true);
             _decoder.WaitForExit();
         }
 

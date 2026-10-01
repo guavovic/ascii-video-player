@@ -32,7 +32,9 @@ Para os dublês de teste:
 ## Consequências
 
 - 37 testes, em cerca de 5 s com o FFmpeg. Três quebras propositais (pular quadros desligado, média da área errada e cor enviada em todo caractere) derrubaram 6 testes.
-- Os testes acharam um defeito: o `Dispose` matava o `ffmpeg` sem esperar o processo terminar, e o arquivo continuava preso por um instante.
+- Os testes acharam dois defeitos no encerramento do `ffmpeg`:
+  - O `Dispose` matava o processo sem esperar ele terminar, e o arquivo de vídeo continuava preso por um instante.
+  - No CI do Windows, o FFmpeg instalado pelo Chocolatey é um *shim*, um executável que abre o `ffmpeg` real como processo filho. O `Kill` matava só o shim, o `ffmpeg` real continuava segurando o pipe, e o player travava ao fechar (por exemplo, no Esc). Agora a árvore de processos inteira é encerrada. O travamento foi reproduzido localmente com um shim de teste antes da correção.
 - O áudio pelo OpenAL não tem teste automático, porque os runners do CI não têm placa de som.
 
 Benchmark num Intel Core i5-13420H, com imagem de ruído aleatório (o pior caso para a cor, que muda em todo caractere) e o quadro decodificado em 640×360:
