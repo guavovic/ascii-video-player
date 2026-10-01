@@ -4,16 +4,15 @@ using AsciiVideoPlayer.Ascii;
 
 namespace AsciiVideoPlayer.Terminal;
 
-public sealed class TerminalRenderer(bool color)
+public sealed class TerminalRenderer(ITerminal terminal, bool color)
 {
-    private readonly Stream _output = Console.OpenStandardOutput();
     private readonly ArrayBufferWriter<byte> _buffer = new();
     private (int Columns, int Rows) _terminalSize;
     private bool _clearPending;
 
     public FrameLayout Fit(int videoWidth, int videoHeight, int? maxWidth)
     {
-        (int Columns, int Rows) size = (Console.WindowWidth, Console.WindowHeight);
+        (int Columns, int Rows) size = (terminal.Columns, terminal.Rows);
 
         if (size != _terminalSize)
         {
@@ -54,11 +53,10 @@ public sealed class TerminalRenderer(bool color)
             }
         }
 
-        _output.Write(_buffer.WrittenSpan);
+        terminal.Write(_buffer.WrittenSpan);
     }
 
-    public static bool EscapePressed() =>
-        Console.KeyAvailable && Console.ReadKey(intercept: true).Key == ConsoleKey.Escape;
+    public bool EscapePressed() => terminal.EscapePressed();
 
     private void MoveCursor(int row, int column)
     {

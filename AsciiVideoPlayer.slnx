@@ -1,5 +1,11 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/AsciiVideoPlayer.Benchmarks/AsciiVideoPlayer.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/AsciiVideoPlayer/AsciiVideoPlayer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AsciiVideoPlayer.Tests/AsciiVideoPlayer.Tests.csproj" />
   </Folder>
 </Solution>
