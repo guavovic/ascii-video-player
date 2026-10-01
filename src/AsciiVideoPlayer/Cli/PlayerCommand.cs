@@ -20,7 +20,7 @@ public static class PlayerCommand
         video.AcceptExistingOnly();
 
         var width = PositiveNumberOption<int>(
-            "--width", "-w", "Largura em colunas. Padrão: metade da largura do vídeo.");
+            "--width", "-w", "Largura máxima em colunas. Padrão: a largura do terminal.");
 
         var fps = PositiveNumberOption<double>(
             "--fps", "-f", "Quadros por segundo exibidos, até o FPS do vídeo. Padrão: metade do FPS do vídeo.");
@@ -41,9 +41,14 @@ public static class PlayerCommand
             Description = "Toca só o vídeo, sem o áudio.",
         };
 
+        var noColor = new Option<bool>("--no-color")
+        {
+            Description = "Desenha sem cores. A variável de ambiente NO_COLOR tem o mesmo efeito.",
+        };
+
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, noAudio,
+            video, width, fps, palette, noAudio, noColor,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -51,7 +56,8 @@ public static class PlayerCommand
             result.GetValue(width),
             result.GetValue(fps),
             result.GetValue(palette)!,
-            result.GetValue(noAudio))));
+            result.GetValue(noAudio),
+            result.GetValue(noColor))));
 
         return command;
     }
@@ -79,6 +85,12 @@ public static class PlayerCommand
     {
         string path = options.Video.FullName;
 
+        if (Console.IsOutputRedirected)
+        {
+            Console.Error.WriteLine("O player precisa de um terminal para desenhar, e a saída está redirecionada.");
+            return 1;
+        }
+
         using var video = OpenCvVideoSource.TryOpen(path);
 
         if (video is null)
@@ -91,14 +103,14 @@ public static class PlayerCommand
 
         using var audio = !options.NoAudio && OperatingSystem.IsWindows() ? NAudioPlayer.TryOpen(path) : null;
 
-        int columns = options.Width ?? (video.Width + 1) / 2;
-        int rows = Math.Max(1, (int)Math.Round(columns * video.Height / (double)video.Width / 2));
+        bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
         double fps = options.Fps ?? video.Fps / 2;
 
-        var converter = new AsciiConverter(new CharacterPalette(options.Palette), columns, rows);
-        var player = new Player(video, converter, new TerminalRenderer(), audio, fps);
+        var converter = new AsciiConverter(new CharacterPalette(options.Palette));
+        var player = new Player(video, converter, new TerminalRenderer(color), audio, fps, options.Width);
 
-        player.Play();
+        using var session = new TerminalSession();
+        player.Play(session.Cancellation);
         return 0;
     }
 }
