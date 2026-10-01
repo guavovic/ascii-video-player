@@ -2,11 +2,10 @@
 
 Player de vídeo para o terminal. Cada quadro vira texto em caracteres ASCII coloridos, ajustado ao tamanho da janela, com o áudio tocando junto. Roda no Windows, no Linux e no macOS.
 
-**Download:** [Releases](https://github.com/guavovic/ascii-video-player/releases)
-
-<img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trecho de Big Buck Bunny tocando no terminal em caracteres ASCII coloridos" width="560">
-
-<sub>Vídeo do GIF: [Big Buck Bunny](https://peach.blender.org), © Blender Foundation, licença [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).</sub>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trecho de Big Buck Bunny tocando no terminal em caracteres ASCII coloridos" width="560"><br>
+  <sub>Vídeo do GIF: <a href="https://peach.blender.org">Big Buck Bunny</a>, © Blender Foundation, licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</sub>
+</p>
 
 ## Como foi feito
 
