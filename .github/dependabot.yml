@@ -1,7 +1,8 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/"
+    directories:
+      - "/src/*"
     schedule:
       interval: "weekly"
     ignore:
