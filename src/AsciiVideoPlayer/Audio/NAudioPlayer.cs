@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using NAudio.Wave;
 
@@ -6,23 +7,36 @@ namespace AsciiVideoPlayer.Audio;
 [SupportedOSPlatform("windows")]
 public sealed class NAudioPlayer : IAudioPlayer
 {
-    private const int BufferLengthMilliseconds = 4000;
-
     private readonly MediaFoundationReader _reader;
-    private readonly BufferedWaveProvider _buffer;
     private readonly WaveOutEvent _output = new();
+    private readonly Stopwatch _sinceStopped = new();
+    private readonly Lock _lock = new();
+    private TimeSpan _lastPosition;
 
     private NAudioPlayer(string path)
     {
         _reader = new MediaFoundationReader(path);
-        _buffer = new BufferedWaveProvider(_reader.WaveFormat, TimeSpan.FromMilliseconds(BufferLengthMilliseconds))
-        {
-            DiscardOnBufferOverflow = true,
-            ReadFully = true,
-        };
+        _output.Init(_reader);
+        _output.PlaybackStopped += OnPlaybackStopped;
+    }
 
-        _output.Init(_buffer);
-        _output.Play();
+    public TimeSpan Elapsed
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (_sinceStopped.IsRunning)
+                    return _lastPosition + _sinceStopped.Elapsed;
+
+                var position = TimeSpan.FromSeconds((double)_output.GetPosition() / _output.OutputWaveFormat.AverageBytesPerSecond);
+
+                if (position > _lastPosition)
+                    _lastPosition = position;
+
+                return _lastPosition;
+            }
+        }
     }
 
     public static NAudioPlayer? TryOpen(string path)
@@ -33,23 +47,23 @@ public sealed class NAudioPlayer : IAudioPlayer
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao carregar áudio: {ex.Message}");
+            Console.Error.WriteLine($"Não foi possível carregar o áudio, o vídeo toca sem som: {ex.Message}");
             return null;
         }
     }
 
-    public void BufferAhead(int seconds)
-    {
-        byte[] samples = new byte[_reader.WaveFormat.AverageBytesPerSecond * seconds];
-        int bytesRead = _reader.Read(samples, 0, samples.Length);
-
-        if (bytesRead > 0)
-            _buffer.AddSamples(samples, 0, bytesRead);
-    }
+    public void Start() => _output.Play();
 
     public void Dispose()
     {
+        _output.PlaybackStopped -= OnPlaybackStopped;
         _output.Dispose();
         _reader.Dispose();
+    }
+
+    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
+    {
+        lock (_lock)
+            _sinceStopped.Start();
     }
 }

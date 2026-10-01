@@ -44,7 +44,7 @@ public sealed class OpenCvVideoSource : IVideoSource
         return true;
     }
 
-    public void SkipFrame() => _capture.Grab();
+    public bool SkipFrame() => _capture.Grab();
 
     public void Dispose()
     {

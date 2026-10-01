@@ -1,6 +1,5 @@
+using AsciiVideoPlayer.Playback;
+
 namespace AsciiVideoPlayer.Audio;
 
-public interface IAudioPlayer : IDisposable
-{
-    void BufferAhead(int seconds);
-}
+public interface IAudioPlayer : IPlaybackClock, IDisposable;
