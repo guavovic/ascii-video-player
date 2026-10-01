@@ -1,29 +1,22 @@
-using System.Text;
 using AsciiVideoPlayer.Video;
 
 namespace AsciiVideoPlayer.Ascii;
 
-public sealed class AsciiConverter(CharacterPalette palette, int columns, int rows)
+public sealed class AsciiConverter(CharacterPalette palette)
 {
-    private readonly StringBuilder _builder = new();
-
-    public string Convert(VideoFrame frame)
+    public void Convert(VideoFrame frame, AsciiImage image)
     {
-        _builder.Clear();
+        byte[] pixels = frame.Pixels;
 
-        for (int row = 0; row < rows; row++)
+        for (int i = 0; i < image.Characters.Length; i++)
         {
-            int y = row * frame.Height / rows;
+            int offset = i * VideoFrame.BytesPerPixel;
+            byte blue = pixels[offset];
+            byte green = pixels[offset + 1];
+            byte red = pixels[offset + 2];
 
-            for (int column = 0; column < columns; column++)
-            {
-                int x = column * frame.Width / columns;
-                _builder.Append(palette.ForBrightness(frame.GetBrightness(x, y)));
-            }
-
-            _builder.Append(Environment.NewLine);
+            image.Characters[i] = palette.ForBrightness(blue + green + red);
+            image.Colors[i] = red << 16 | green << 8 | blue;
         }
-
-        return _builder.ToString();
     }
 }

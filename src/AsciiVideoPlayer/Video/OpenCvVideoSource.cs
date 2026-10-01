@@ -9,6 +9,7 @@ public sealed class OpenCvVideoSource : IVideoSource
 
     private readonly VideoCapture _capture;
     private readonly Mat _mat = new();
+    private readonly Mat _resized = new();
 
     private OpenCvVideoSource(VideoCapture capture)
     {
@@ -35,10 +36,11 @@ public sealed class OpenCvVideoSource : IVideoSource
         if (!_capture.Read(_mat) || _mat.Empty())
             return false;
 
-        if (_mat.Width != frame.Width || _mat.Height != frame.Height || _mat.Type() != MatType.CV_8UC3)
-            throw new InvalidOperationException($"Quadro inesperado: {_mat.Width}x{_mat.Height} {_mat.Type()}.");
+        if (_mat.Type() != MatType.CV_8UC3)
+            throw new InvalidOperationException($"Formato de quadro inesperado: {_mat.Type()}.");
 
-        Marshal.Copy(_mat.Data, frame.Pixels, 0, frame.Pixels.Length);
+        Cv2.Resize(_mat, _resized, new Size(frame.Width, frame.Height), interpolation: InterpolationFlags.Area);
+        Marshal.Copy(_resized.Data, frame.Pixels, 0, frame.Pixels.Length);
         return true;
     }
 
@@ -46,6 +48,7 @@ public sealed class OpenCvVideoSource : IVideoSource
 
     public void Dispose()
     {
+        _resized.Dispose();
         _mat.Dispose();
         _capture.Dispose();
     }

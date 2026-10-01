@@ -11,24 +11,38 @@ public sealed class Player(
     AsciiConverter converter,
     TerminalRenderer renderer,
     IAudioPlayer? audio,
-    double fps)
+    double fps,
+    int? maxWidth)
 {
     private readonly int _frameStep = Math.Max(1, (int)Math.Round(video.Fps / fps));
 
-    public void Play()
+    public void Play(CancellationToken cancellationToken)
     {
         int frameDelay = (int)(1000 * _frameStep / video.Fps);
-        var frame = new VideoFrame(video.Width, video.Height);
         var stopwatch = new Stopwatch();
         bool firstFrame = true;
+        var frame = new VideoFrame(0, 0);
+        var image = new AsciiImage(0, 0);
 
-        while (video.TryReadFrame(frame))
+        while (!cancellationToken.IsCancellationRequested)
         {
+            var layout = renderer.Fit(video.Width, video.Height, maxWidth);
+
+            if (frame.Width != layout.Columns || frame.Height != layout.Rows)
+            {
+                frame = new VideoFrame(layout.Columns, layout.Rows);
+                image = new AsciiImage(layout.Columns, layout.Rows);
+            }
+
+            if (!video.TryReadFrame(frame))
+                break;
+
             audio?.BufferAhead(firstFrame ? 2 : 1);
             firstFrame = false;
 
             SkipFrames();
-            renderer.Draw(converter.Convert(frame));
+            converter.Convert(frame, image);
+            renderer.Draw(image, layout);
             WaitForNextFrame(frameDelay, stopwatch);
 
             if (TerminalRenderer.EscapePressed())
