@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/release.yml"
+      - "src/AsciiVideoPlayer/AsciiVideoPlayer.csproj"
+
+permissions:
+  contents: read
+
+jobs:
+  binarios:
+    name: Binário (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64 }
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+          - { os: macos-latest, rid: osx-arm64 }
+          - { os: macos-latest, rid: osx-x64 }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Definir a versão
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=0.0.0-ci" >> "$GITHUB_ENV"
+          fi
+
+      - name: Instalar o compilador nativo (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
+      - name: Publicar com Native AOT
+        shell: bash
+        run: dotnet publish src/AsciiVideoPlayer -c Release -r ${{ matrix.rid }} -p:PublishAot=true -p:Version="$VERSION" -o publish
+
+      - name: Conferir o binário
+        if: matrix.rid != 'osx-x64'
+        shell: bash
+        run: ./publish/ascii-video-player --version
+
+      - name: Empacotar
+        shell: bash
+        run: |
+          rm -rf publish/*.pdb publish/*.dbg publish/*.dSYM
+          cp LICENSE publish/
+          name="ascii-video-player-$VERSION-${{ matrix.rid }}"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z a "$name.zip" ./publish/*
+          else
+            tar -czf "$name.tar.gz" -C publish .
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.rid }}
+          path: ascii-video-player-*
+
+  release:
+    name: Publicar a release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: binarios
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Criar a release com os binários
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+
+  nuget:
+    name: Publicar no NuGet
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: binarios
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Empacotar a ferramenta
+        run: dotnet pack src/AsciiVideoPlayer -c Release -p:Version="${GITHUB_REF_NAME#v}" -o nupkg
+
+      - name: Entrar no NuGet com Trusted Publishing
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Enviar o pacote
+        run: dotnet nuget push nupkg/*.nupkg --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json

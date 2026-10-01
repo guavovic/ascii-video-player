@@ -6,12 +6,32 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>2.0.0</Version>
+    <AssemblyName>ascii-video-player</AssemblyName>
+    <RootNamespace>AsciiVideoPlayer</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ascii-video-player</ToolCommandName>
+    <PackageId>ascii-video-player</PackageId>
+    <Authors>Gustavo Victor</Authors>
+    <Description>Toca vídeos no terminal em arte ASCII colorida, com o áudio sincronizado. Precisa do FFmpeg instalado.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/guavovic/ascii-video-player</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/guavovic/ascii-video-player</RepositoryUrl>
+    <PackageTags>ascii-art;terminal;video;ffmpeg;cli</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
     <PackageReference Include="System.CommandLine" Version="2.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
