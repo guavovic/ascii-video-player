@@ -11,19 +11,19 @@ public sealed class Player(
     AsciiConverter converter,
     TerminalRenderer renderer,
     IAudioPlayer? audio,
-    int frameStep)
+    double fps)
 {
+    private readonly int _frameStep = Math.Max(1, (int)Math.Round(video.Fps / fps));
+
     public void Play()
     {
-        int frameDelay = (int)(1000 / ((int)video.Fps / frameStep));
+        int frameDelay = (int)(1000 * _frameStep / video.Fps);
         var frame = new VideoFrame(video.Width, video.Height);
         var stopwatch = new Stopwatch();
         bool firstFrame = true;
 
         while (video.TryReadFrame(frame))
         {
-            SkipFrames();
-
             audio?.BufferAhead(firstFrame ? 2 : 1);
             firstFrame = false;
 
@@ -38,7 +38,7 @@ public sealed class Player(
 
     private void SkipFrames()
     {
-        for (int i = 0; i < frameStep - 1; i++)
+        for (int i = 0; i < _frameStep - 1; i++)
             video.SkipFrame();
     }
 
