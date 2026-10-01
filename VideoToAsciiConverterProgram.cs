@@ -9,7 +9,7 @@ namespace VideoToAsciiConverter
     {
         private const int FPS_DIVISOR = 2;
         private const int SIZE_DIVISOR = 2;
-        private const int AUDIO_BUFFER_LENGHT = 1000;
+        private const int AUDIO_BUFFER_LENGTH = 1000;
 
         private static readonly Stream ConsoleStream = Console.OpenStandardOutput();
 
@@ -19,9 +19,9 @@ namespace VideoToAsciiConverter
         private static int HeightDivisor;
         private static int FrameDelay;
 
-        private static MediaFoundationReader reader;
-        private static BufferedWaveProvider bufferedWaveProvider;
-        private static WaveOutEvent player;
+        private static MediaFoundationReader? reader;
+        private static BufferedWaveProvider? bufferedWaveProvider;
+        private static WaveOutEvent? player;
         private static bool HasAudio;
 
         static void Main()
@@ -36,7 +36,7 @@ namespace VideoToAsciiConverter
             }
 
             InitializeConsole(videoPath);
-            InitializeAudio(videoPath); // Arrumar audio 
+            InitializeAudio(videoPath);
 
             ProcessVideo();
         }
@@ -56,17 +56,17 @@ namespace VideoToAsciiConverter
         {
             try
             {
-                using (var reader = new MediaFoundationReader(videoPath))
-                {
-                    bufferedWaveProvider = new BufferedWaveProvider(reader.WaveFormat);
-                    bufferedWaveProvider.BufferDuration = TimeSpan.FromMilliseconds(AUDIO_BUFFER_LENGHT * 4);
-                    bufferedWaveProvider.DiscardOnBufferOverflow = true;
-                    bufferedWaveProvider.ReadFully = true;
+                reader = new MediaFoundationReader(videoPath);
 
-                    player = new WaveOutEvent();
-                    player.Init(bufferedWaveProvider);
-                    HasAudio = true;
-                }
+                bufferedWaveProvider = new BufferedWaveProvider(reader.WaveFormat);
+                bufferedWaveProvider.BufferDuration = TimeSpan.FromMilliseconds(AUDIO_BUFFER_LENGTH * 4);
+                bufferedWaveProvider.DiscardOnBufferOverflow = true;
+                bufferedWaveProvider.ReadFully = true;
+
+                player = new WaveOutEvent();
+                player.Init(bufferedWaveProvider);
+                player.Play();
+                HasAudio = true;
             }
             catch (Exception ex)
             {
@@ -169,6 +169,9 @@ namespace VideoToAsciiConverter
 
         public static void WriteAudio(int seconds)
         {
+            if (reader is null || bufferedWaveProvider is null)
+                return;
+
             byte[] audioBuffer = new byte[reader.WaveFormat.AverageBytesPerSecond * seconds];
             int bytesRead = reader.Read(audioBuffer, 0, audioBuffer.Length);
 
