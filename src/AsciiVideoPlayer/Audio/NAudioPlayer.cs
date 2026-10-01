@@ -1,7 +1,9 @@
+using System.Runtime.Versioning;
 using NAudio.Wave;
 
 namespace AsciiVideoPlayer.Audio;
 
+[SupportedOSPlatform("windows")]
 public sealed class NAudioPlayer : IAudioPlayer
 {
     private const int BufferLengthMilliseconds = 4000;
@@ -13,9 +15,8 @@ public sealed class NAudioPlayer : IAudioPlayer
     private NAudioPlayer(string path)
     {
         _reader = new MediaFoundationReader(path);
-        _buffer = new BufferedWaveProvider(_reader.WaveFormat)
+        _buffer = new BufferedWaveProvider(_reader.WaveFormat, TimeSpan.FromMilliseconds(BufferLengthMilliseconds))
         {
-            BufferDuration = TimeSpan.FromMilliseconds(BufferLengthMilliseconds),
             DiscardOnBufferOverflow = true,
             ReadFully = true,
         };
