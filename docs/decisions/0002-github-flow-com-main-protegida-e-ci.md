@@ -22,7 +22,7 @@ GitHub Flow.
 - A `main` é protegida: pull request obrigatória, e o check `Build` precisa passar antes do merge. A regra vale também para administradores.
 - O workflow de CI (`.github/workflows/ci.yml`) faz o restore e o build em toda pull request e em todo push na `main`. Aviso de compilação quebra o build (`-warnaserror`), para problemas como o do campo de áudio nunca atribuído não passarem de novo.
 - O CI roda no Linux. O programa ainda só funciona no Windows, mas a compilação não depende do sistema. Quando o player for multiplataforma, o workflow ganha uma matriz com Windows, Linux e macOS.
-- O Dependabot acompanha os pacotes NuGet e as actions do workflow toda semana.
+- O Dependabot acompanha os pacotes NuGet e as actions do workflow uma vez por mês, com as atualizações agrupadas numa PR por ecossistema. As correções de segurança não esperam o mês: chegam pelos alertas do GitHub assim que saem. (Atualizado em 01/10/2026: era semanal, com uma PR por pacote, e gerava PRs demais para um projeto mantido por uma pessoa.)
 - As versões são tags na `main` (`v1.0.0` marca o player antes destas mudanças, e a v2 sai como tag quando a trilha fechar), não uma branch `develop`.
 
 ## Consequências

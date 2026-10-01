@@ -4,7 +4,10 @@ updates:
     directories:
       - "/src/*"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      nuget:
+        patterns: ["*"]
     ignore:
       - dependency-name: "NAudio.*"
         update-types: ["version-update:semver-major"]
@@ -12,4 +15,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]
