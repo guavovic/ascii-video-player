@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using AsciiVideoPlayer.Ascii;
-using AsciiVideoPlayer.Audio;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Video;
 
@@ -10,22 +8,38 @@ public sealed class Player(
     IVideoSource video,
     AsciiConverter converter,
     TerminalRenderer renderer,
-    IAudioPlayer? audio,
+    IPlaybackClock clock,
     double fps,
     int? maxWidth)
 {
-    private readonly int _frameStep = Math.Max(1, (int)Math.Round(video.Fps / fps));
-
     public void Play(CancellationToken cancellationToken)
     {
-        int frameDelay = (int)(1000 * _frameStep / video.Fps);
-        var stopwatch = new Stopwatch();
-        bool firstFrame = true;
+        var displayInterval = TimeSpan.FromSeconds(1 / Math.Min(fps, video.Fps));
+        var nextDisplay = TimeSpan.Zero;
+        long nextFrameIndex = 0;
         var frame = new VideoFrame(0, 0);
         var image = new AsciiImage(0, 0);
 
+        clock.Start();
+
         while (!cancellationToken.IsCancellationRequested)
         {
+            var now = clock.Elapsed;
+
+            if (now < nextDisplay)
+            {
+                Thread.Sleep(nextDisplay - now);
+                continue;
+            }
+
+            long currentFrameIndex = (long)(now.TotalSeconds * video.Fps);
+
+            for (; nextFrameIndex < currentFrameIndex; nextFrameIndex++)
+            {
+                if (!video.SkipFrame())
+                    return;
+            }
+
             var layout = renderer.Fit(video.Width, video.Height, maxWidth);
 
             if (frame.Width != layout.Columns || frame.Height != layout.Rows)
@@ -35,34 +49,19 @@ public sealed class Player(
             }
 
             if (!video.TryReadFrame(frame))
-                break;
+                return;
 
-            audio?.BufferAhead(firstFrame ? 2 : 1);
-            firstFrame = false;
-
-            SkipFrames();
+            nextFrameIndex++;
             converter.Convert(frame, image);
             renderer.Draw(image, layout);
-            WaitForNextFrame(frameDelay, stopwatch);
+
+            nextDisplay += displayInterval;
+
+            if (nextDisplay < now)
+                nextDisplay = now;
 
             if (TerminalRenderer.EscapePressed())
-                break;
+                return;
         }
-    }
-
-    private void SkipFrames()
-    {
-        for (int i = 0; i < _frameStep - 1; i++)
-            video.SkipFrame();
-    }
-
-    private static void WaitForNextFrame(int frameDelay, Stopwatch stopwatch)
-    {
-        int remaining = frameDelay - (int)stopwatch.ElapsedMilliseconds;
-
-        if (remaining > 0)
-            Thread.Sleep(remaining);
-
-        stopwatch.Restart();
     }
 }

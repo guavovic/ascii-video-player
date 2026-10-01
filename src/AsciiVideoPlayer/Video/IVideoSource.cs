@@ -7,5 +7,5 @@ public interface IVideoSource : IDisposable
     double Fps { get; }
 
     bool TryReadFrame(VideoFrame frame);
-    void SkipFrame();
+    bool SkipFrame();
 }

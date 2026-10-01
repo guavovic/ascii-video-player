@@ -23,7 +23,7 @@ public static class PlayerCommand
             "--width", "-w", "Largura máxima em colunas. Padrão: a largura do terminal.");
 
         var fps = PositiveNumberOption<double>(
-            "--fps", "-f", "Quadros por segundo exibidos, até o FPS do vídeo. Padrão: metade do FPS do vídeo.");
+            "--fps", "-f", "Quadros por segundo exibidos, até o FPS do vídeo. Padrão: o FPS do vídeo.");
 
         var palette = new Option<string>("--palette", "-p")
         {
@@ -104,10 +104,12 @@ public static class PlayerCommand
         using var audio = !options.NoAudio && OperatingSystem.IsWindows() ? NAudioPlayer.TryOpen(path) : null;
 
         bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
-        double fps = options.Fps ?? video.Fps / 2;
+
+        IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
 
         var converter = new AsciiConverter(new CharacterPalette(options.Palette));
-        var player = new Player(video, converter, new TerminalRenderer(color), audio, fps, options.Width);
+        var player = new Player(
+            video, converter, new TerminalRenderer(color), clock, options.Fps ?? video.Fps, options.Width);
 
         using var session = new TerminalSession();
         player.Play(session.Cancellation);
