@@ -19,7 +19,7 @@ if (video is null)
 
 Console.Title = Path.GetFileNameWithoutExtension(videoPath);
 
-using var audio = NAudioPlayer.TryOpen(videoPath);
+using var audio = OperatingSystem.IsWindows() ? NAudioPlayer.TryOpen(videoPath) : null;
 
 var converter = new AsciiConverter(CharacterPalette.Default, ColumnStep, rowStep: ColumnStep * 2);
 var renderer = new TerminalRenderer();

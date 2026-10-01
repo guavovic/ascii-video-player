@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "NAudio"
+      - dependency-name: "NAudio.*"
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
