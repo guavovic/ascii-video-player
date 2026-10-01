@@ -121,7 +121,7 @@ public static class PlayerCommand
 
         var converter = new AsciiConverter(new CharacterPalette(options.Palette));
         var player = new Player(
-            video, converter, new TerminalRenderer(color), clock, options.Fps ?? video.Fps, options.Width);
+            video, converter, new TerminalRenderer(new ConsoleTerminal(), color), clock, options.Fps ?? video.Fps, options.Width);
 
         using var session = new TerminalSession();
         player.Play(session.Cancellation);

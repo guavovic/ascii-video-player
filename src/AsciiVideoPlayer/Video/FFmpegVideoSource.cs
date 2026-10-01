@@ -53,7 +53,10 @@ public sealed class FFmpegVideoSource : IVideoSource
     public void Dispose()
     {
         if (!_process.HasExited)
+        {
             _process.Kill();
+            _process.WaitForExit();
+        }
 
         _process.Dispose();
     }

@@ -28,7 +28,7 @@ public sealed class Player(
 
             if (now < nextDisplay)
             {
-                Thread.Sleep(nextDisplay - now);
+                clock.WaitUntil(nextDisplay);
                 continue;
             }
 
@@ -60,7 +60,7 @@ public sealed class Player(
             if (nextDisplay < now)
                 nextDisplay = now;
 
-            if (TerminalRenderer.EscapePressed())
+            if (renderer.EscapePressed())
                 return;
         }
     }

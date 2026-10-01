@@ -103,7 +103,10 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
         _feeder?.Join();
 
         if (!_decoder.HasExited)
+        {
             _decoder.Kill();
+            _decoder.WaitForExit();
+        }
 
         _decoder.Dispose();
 
