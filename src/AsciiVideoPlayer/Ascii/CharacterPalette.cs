@@ -2,9 +2,9 @@ namespace AsciiVideoPlayer.Ascii;
 
 public sealed class CharacterPalette(string characters)
 {
-    private const int MaxBrightness = 256 * 3;
+    public const string DefaultCharacters = " .,:;i1tfLCOG08@#";
 
-    public static CharacterPalette Default { get; } = new(" .,:;i1tfLCOG08@#");
+    private const int MaxBrightness = 256 * 3;
 
     public char ForBrightness(int brightness) =>
         characters[brightness * characters.Length / MaxBrightness];

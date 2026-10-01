@@ -3,7 +3,7 @@ using AsciiVideoPlayer.Video;
 
 namespace AsciiVideoPlayer.Ascii;
 
-public sealed class AsciiConverter(CharacterPalette palette, int columnStep, int rowStep)
+public sealed class AsciiConverter(CharacterPalette palette, int columns, int rows)
 {
     private readonly StringBuilder _builder = new();
 
@@ -11,10 +11,15 @@ public sealed class AsciiConverter(CharacterPalette palette, int columnStep, int
     {
         _builder.Clear();
 
-        for (int y = 0; y < frame.Height; y += rowStep)
+        for (int row = 0; row < rows; row++)
         {
-            for (int x = 0; x < frame.Width; x += columnStep)
+            int y = row * frame.Height / rows;
+
+            for (int column = 0; column < columns; column++)
+            {
+                int x = column * frame.Width / columns;
                 _builder.Append(palette.ForBrightness(frame.GetBrightness(x, y)));
+            }
 
             _builder.Append(Environment.NewLine);
         }

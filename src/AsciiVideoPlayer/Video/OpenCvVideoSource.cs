@@ -5,6 +5,8 @@ namespace AsciiVideoPlayer.Video;
 
 public sealed class OpenCvVideoSource : IVideoSource
 {
+    private const double FallbackFps = 30;
+
     private readonly VideoCapture _capture;
     private readonly Mat _mat = new();
 
@@ -15,7 +17,7 @@ public sealed class OpenCvVideoSource : IVideoSource
 
     public int Width => _capture.FrameWidth;
     public int Height => _capture.FrameHeight;
-    public double Fps => _capture.Fps;
+    public double Fps => _capture.Fps > 0 ? _capture.Fps : FallbackFps;
 
     public static OpenCvVideoSource? TryOpen(string path)
     {
