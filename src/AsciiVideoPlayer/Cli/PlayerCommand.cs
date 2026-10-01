@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Numerics;
 using AsciiVideoPlayer.Ascii;
 using AsciiVideoPlayer.Audio;
+using AsciiVideoPlayer.Media;
 using AsciiVideoPlayer.Playback;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Video;
@@ -91,9 +92,19 @@ public static class PlayerCommand
             return 1;
         }
 
-        using var video = OpenCvVideoSource.TryOpen(path);
+        MediaInfo? info;
 
-        if (video is null)
+        try
+        {
+            info = FFmpeg.Probe(path);
+        }
+        catch (FFmpegNotFoundException)
+        {
+            Console.Error.WriteLine("O FFmpeg não foi encontrado. Instale o FFmpeg (com o ffmpeg e o ffprobe no PATH) e tente de novo.");
+            return 1;
+        }
+
+        if (info is null)
         {
             Console.Error.WriteLine($"Não foi possível abrir o vídeo: {path}");
             return 1;
@@ -101,7 +112,8 @@ public static class PlayerCommand
 
         Console.Title = Path.GetFileNameWithoutExtension(path);
 
-        using var audio = !options.NoAudio && OperatingSystem.IsWindows() ? NAudioPlayer.TryOpen(path) : null;
+        using var video = new FFmpegVideoSource(path, info);
+        using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
 
         bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
 
