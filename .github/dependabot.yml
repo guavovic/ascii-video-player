@@ -8,9 +8,6 @@ updates:
     groups:
       nuget:
         patterns: ["*"]
-    ignore:
-      - dependency-name: "NAudio.*"
-        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
