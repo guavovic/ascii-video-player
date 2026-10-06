@@ -36,4 +36,8 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Export\desenho.js" LogicalName="desenho.js" />
+  </ItemGroup>
+
 </Project>

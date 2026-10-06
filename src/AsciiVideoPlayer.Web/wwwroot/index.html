@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASCII Video Player</title>
+  <meta name="description" content="Toque um vídeo em caracteres coloridos, direto no navegador, sem instalar nada.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c0c0c'/%3E%3Ctext x='6' y='22' font-family='monospace' font-size='16' fill='%23e8e3d3'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header>
+    <a class="marca" href="./">ascii-video-player</a>
+    <a href="https://github.com/guavovic/ascii-video-player">código no GitHub</a>
+  </header>
+
+  <main>
+    <section id="palco">
+      <div id="inicio">
+        <h1>Seu vídeo em caracteres,<br>direto no navegador.</h1>
+        <p>Arraste um vídeo para cá, escolha um arquivo ou veja o exemplo.</p>
+        <div class="acoes">
+          <label class="botao principal">Escolher vídeo<input id="arquivo" type="file" accept="video/*" hidden></label>
+          <button id="exemplo" class="botao">Ver o exemplo</button>
+        </div>
+        <p class="nota">O vídeo não sai do seu computador. A conversão roda aqui mesmo, no mesmo código C# do player de terminal, compilado para WebAssembly.</p>
+        <p id="carregando" class="nota">Carregando o conversor…</p>
+      </div>
+      <canvas id="tela" hidden></canvas>
+    </section>
+
+    <div id="controles" hidden>
+      <div class="linha">
+        <button id="tocar" class="botao">pausar</button>
+        <span id="tempo">0:00 / 0:00</span>
+        <input id="posicao" type="range" min="0" max="1000" value="0" aria-label="Posição no vídeo">
+      </div>
+      <div class="linha">
+        <label>estilo
+          <select id="estilo">
+            <option value="ascii">ascii</option>
+            <option value="blocks">meio bloco</option>
+            <option value="braille">braille</option>
+            <option value="dither">pontilhado</option>
+            <option value="edges">contornos</option>
+          </select>
+        </label>
+        <label>colunas <input id="colunas" type="range" min="40" max="200" step="4" value="120"> <output id="colunas-valor">120</output></label>
+        <label><input id="cor" type="checkbox" checked> cor</label>
+        <label class="botao">legenda .srt<input id="legenda" type="file" accept=".srt" hidden></label>
+        <button id="cheia" class="botao">tela cheia</button>
+        <button id="trocar" class="botao">outro vídeo</button>
+      </div>
+      <p class="atalhos">espaço pausa · ← → 5 s · F tela cheia</p>
+    </div>
+
+    <p id="credito" class="nota" hidden>Exemplo: <a href="https://peach.blender.org">Big Buck Bunny</a>, © Blender Foundation, licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+  </main>
+
+  <video id="video" playsinline preload="auto" hidden></video>
+  <script src="desenho.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

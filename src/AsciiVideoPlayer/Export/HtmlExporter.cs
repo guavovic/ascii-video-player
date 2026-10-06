@@ -11,7 +11,12 @@ namespace AsciiVideoPlayer.Export;
 
 public sealed class HtmlExporter(AsciiConverter converter, bool color)
 {
-    public const int BytesPerCell = 9;
+    private static readonly Lazy<string> Drawing = new(() =>
+    {
+        using var stream = typeof(HtmlExporter).Assembly.GetManifestResourceStream("desenho.js")!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    });
 
     public int Export(
         IVideoSource video,
@@ -28,7 +33,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
         var layout = FrameLayout.Fit(video.Width, video.Height, columns, int.MaxValue, maxWidth: null);
         var frame = converter.CreateFrame(layout.Columns, layout.Rows);
         var image = new AsciiImage(layout.Columns, layout.Rows);
-        var cells = new byte[layout.Columns * layout.Rows * BytesPerCell];
+        var cells = new byte[layout.Columns * layout.Rows * CellEncoding.BytesPerCell];
         using var compressed = new MemoryStream();
         int frames = 0;
 
@@ -50,7 +55,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
 
                 position++;
                 converter.Convert(frame, image);
-                EncodeCells(image, color, cells);
+                CellEncoding.Encode(image, color, cells);
                 gzip.Write(cells);
                 frames++;
                 onFrame?.Invoke(frames);
@@ -60,27 +65,6 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
 
         WritePage(output, title, outputFps, layout, frames, compressed.GetBuffer().AsSpan(0, (int)compressed.Length), Cues(subtitles, start));
         return frames;
-    }
-
-    public static void EncodeCells(AsciiImage image, bool color, Span<byte> cells)
-    {
-        for (int i = 0, offset = 0; i < image.Characters.Length; i++, offset += BytesPerCell)
-        {
-            char character = image.Characters[i];
-            int foreground = color ? image.Colors[i] : 0xCCCCCC;
-            int background = color && image.Backgrounds[i] != AsciiImage.NoColor ? image.Backgrounds[i] : 0;
-            bool hasBackground = color && image.Backgrounds[i] != AsciiImage.NoColor;
-
-            cells[offset] = (byte)character;
-            cells[offset + 1] = (byte)(character >> 8);
-            cells[offset + 2] = (byte)(foreground >> 16);
-            cells[offset + 3] = (byte)(foreground >> 8);
-            cells[offset + 4] = (byte)foreground;
-            cells[offset + 5] = (byte)(hasBackground ? 1 : 0);
-            cells[offset + 6] = (byte)(background >> 16);
-            cells[offset + 7] = (byte)(background >> 8);
-            cells[offset + 8] = (byte)background;
-        }
     }
 
     // Cada legenda vira [início, fim, texto], em segundos a partir do começo do export.
@@ -127,84 +111,27 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
             <script>
 
             """);
+        output.Write(Drawing.Value);
         output.Write(string.Create(CultureInfo.InvariantCulture,
-            $"const fps = {fps}, colunas = {layout.Columns}, linhas = {layout.Rows}, total = {frames}, celula = {BytesPerCell};\n"));
+            $"\nconst fps = {fps}, colunas = {layout.Columns}, linhas = {layout.Rows}, total = {frames};\n"));
         output.Write($"const legendas = {cues};\n");
         output.Write("const dados = \"");
         output.Write(Convert.ToBase64String(data));
         output.Write("""
             ";
             const tela = document.getElementById("tela"), contexto = tela.getContext("2d");
-            let quadros, atual = 0, tocando = true, relogio, largura, altura;
+            let quadros, atual = 0, tocando = true, relogio, celula;
 
             function ajustar() {
-              const fonte = Math.max(2, Math.min(innerWidth / (colunas * 0.6), (innerHeight - 24) / (linhas * 1.2)));
-              const escala = devicePixelRatio || 1;
-              largura = fonte * 0.6; altura = fonte * 1.2;
-              tela.width = Math.round(colunas * largura * escala); tela.height = Math.round(linhas * altura * escala);
-              tela.style.width = colunas * largura + "px"; tela.style.height = linhas * altura + "px";
-              contexto.setTransform(escala, 0, 0, escala, 0, 0);
-              contexto.font = fonte + 'px "Cascadia Mono", Consolas, Menlo, "DejaVu Sans Mono", monospace';
-              contexto.textBaseline = "middle";
-            }
-
-            // Braille: bit de cada ponto como [coluna, linha] dentro da célula de 2×4.
-            const posicoes = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [0, 3], [1, 3]];
-
-            function pontos(bits, x, y) {
-              const raio = Math.min(largura / 2, altura / 4) * 0.4;
-              contexto.beginPath();
-              for (let bit = 0; bit < 8; bit++) {
-                if (!(bits & 1 << bit)) continue;
-                const [coluna, linha] = posicoes[bit];
-                const cx = x + (coluna + 0.5) * largura / 2, cy = y + (linha + 0.5) * altura / 4;
-                contexto.moveTo(cx + raio, cy);
-                contexto.arc(cx, cy, raio, 0, 2 * Math.PI);
-              }
-              contexto.fill();
+              celula = ajustarCanvas(tela, contexto, colunas, linhas, innerWidth, innerHeight - 24);
             }
 
             function desenhar() {
-              const inicio = atual * colunas * linhas * celula;
-              contexto.fillStyle = "#0c0c0c";
-              contexto.fillRect(0, 0, colunas * largura, linhas * altura);
-              for (let linha = 0, c = inicio; linha < linhas; linha++) {
-                for (let coluna = 0; coluna < colunas; coluna++, c += celula) {
-                  const x = coluna * largura, y = linha * altura;
-                  if (quadros[c + 5]) {
-                    contexto.fillStyle = `rgb(${quadros[c + 6]},${quadros[c + 7]},${quadros[c + 8]})`;
-                    contexto.fillRect(x, y, largura + 0.5, altura + 0.5);
-                  }
-                  const letra = quadros[c] | quadros[c + 1] << 8;
-                  if (letra === 32) continue;
-                  contexto.fillStyle = `rgb(${quadros[c + 2]},${quadros[c + 3]},${quadros[c + 4]})`;
-                  if (letra === 0x2580) contexto.fillRect(x, y, largura + 0.5, altura / 2 + 0.5);
-                  else if (letra === 0x2584) contexto.fillRect(x, y + altura / 2, largura + 0.5, altura / 2 + 0.5);
-                  else if (letra === 0x2588) contexto.fillRect(x, y, largura + 0.5, altura + 0.5);
-                  else if (letra > 0x2800 && letra <= 0x28FF) pontos(letra - 0x2800, x, y);
-                  else contexto.fillText(String.fromCharCode(letra), x, y + altura / 2);
-                }
-              }
-              legenda(atual / fps);
-              atual = (atual + 1) % total;
-            }
-
-            function legenda(tempo) {
+              desenharCelulas(contexto, quadros, atual * colunas * linhas * bytesPorCelula, colunas, linhas, celula);
+              const tempo = atual / fps;
               const ativa = legendas.find(([inicio, fim]) => tempo >= inicio && tempo < fim);
-              if (!ativa) return;
-              const partes = ativa[2].split("\n"), tamanho = Math.max(12, altura * 1.3), fonte = contexto.font;
-              contexto.font = `bold ${tamanho}px system-ui, sans-serif`;
-              contexto.textAlign = "center";
-              partes.forEach((texto, i) => {
-                const x = colunas * largura / 2, y = linhas * altura - (partes.length - i) * tamanho * 1.35;
-                const caixa = contexto.measureText(texto).width + tamanho;
-                contexto.fillStyle = "rgba(0, 0, 0, 0.75)";
-                contexto.fillRect(x - caixa / 2, y - tamanho * 0.65, caixa, tamanho * 1.3);
-                contexto.fillStyle = "#ffffff";
-                contexto.fillText(texto, x, y);
-              });
-              contexto.font = fonte;
-              contexto.textAlign = "start";
+              desenharLegenda(contexto, ativa?.[2], colunas, linhas, celula);
+              atual = (atual + 1) % total;
             }
 
             function alternar() {
@@ -217,7 +144,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
               const fluxo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
               quadros = new Uint8Array(await new Response(fluxo).arrayBuffer());
               ajustar();
-              addEventListener("resize", () => { ajustar(); });
+              addEventListener("resize", ajustar);
               addEventListener("keydown", evento => { if (evento.code === "Space") { evento.preventDefault(); alternar(); } });
               tela.addEventListener("click", alternar);
               desenhar();

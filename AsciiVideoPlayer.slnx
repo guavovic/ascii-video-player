@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/AsciiVideoPlayer/AsciiVideoPlayer.csproj" />
+    <Project Path="src/AsciiVideoPlayer.Web/AsciiVideoPlayer.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AsciiVideoPlayer.Tests/AsciiVideoPlayer.Tests.csproj" />
