@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Numerics;
 using AsciiVideoPlayer.Ascii;
 using AsciiVideoPlayer.Audio;
+using AsciiVideoPlayer.Export;
 using AsciiVideoPlayer.Media;
 using AsciiVideoPlayer.Playback;
 using AsciiVideoPlayer.Terminal;
@@ -52,9 +53,19 @@ public static class PlayerCommand
             Description = "Recomeça o vídeo quando ele acaba, até apertar Esc ou Ctrl+C.",
         };
 
+        var export = new Option<FileInfo?>("--export", "-o")
+        {
+            Description = "Em vez de tocar, salva o vídeo numa página HTML que toca o ASCII sozinha. A largura padrão é 120 colunas.",
+        };
+        export.Validators.Add(result =>
+        {
+            if (result.GetValue(export) is { } file && !file.Extension.Equals(".html", StringComparison.OrdinalIgnoreCase))
+                result.AddError("--export precisa de um arquivo .html.");
+        });
+
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, noAudio, noColor, loop,
+            video, width, fps, palette, noAudio, noColor, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -64,9 +75,27 @@ public static class PlayerCommand
             result.GetValue(palette)!,
             result.GetValue(noAudio),
             result.GetValue(noColor),
-            result.GetValue(loop))));
+            result.GetValue(loop),
+            result.GetValue(export))));
 
         return command;
+    }
+
+    private static int Export(PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color)
+    {
+        using var video = new FFmpegVideoSource(path, info);
+        using var output = new StreamWriter(options.Export!.FullName, append: false, new System.Text.UTF8Encoding(false));
+
+        int frames = new HtmlExporter(converter, color).Export(
+            video,
+            options.Fps ?? video.Fps,
+            options.Width ?? DefaultExportColumns,
+            Path.GetFileNameWithoutExtension(path),
+            output,
+            count => Console.Error.Write($"\rExportando: {count} quadros"));
+
+        Console.Error.WriteLine($"\rPronto: {frames} quadros em {options.Export.FullName}");
+        return 0;
     }
 
     private static Option<T?> PositiveNumberOption<T>(string name, string alias, string description)
@@ -88,11 +117,13 @@ public static class PlayerCommand
         };
     }
 
+    private const int DefaultExportColumns = 120;
+
     private static int Run(PlayerOptions options)
     {
         string path = options.Video.FullName;
 
-        if (Console.IsOutputRedirected)
+        if (options.Export is null && Console.IsOutputRedirected)
         {
             Console.Error.WriteLine("O player precisa de um terminal para desenhar, e a saída está redirecionada.");
             return 1;
@@ -116,10 +147,12 @@ public static class PlayerCommand
             return 1;
         }
 
-        Console.Title = Path.GetFileNameWithoutExtension(path);
-
         bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
         var converter = new AsciiConverter(new CharacterPalette(options.Palette));
+        if (options.Export is not null)
+            return Export(options, path, info, converter, color);
+
+        Console.Title = Path.GetFileNameWithoutExtension(path);
         var renderer = new TerminalRenderer(new ConsoleTerminal(), color);
 
         using var session = new TerminalSession();

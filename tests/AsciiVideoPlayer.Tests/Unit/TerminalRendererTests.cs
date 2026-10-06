@@ -67,6 +67,21 @@ public sealed class TerminalRendererTests
     }
 
     [Fact]
+    public void Envia_o_fundo_so_quando_ele_muda_e_volta_ao_padrao_sem_fundo()
+    {
+        var terminal = new FakeTerminal();
+        var renderer = new TerminalRenderer(terminal, color: true);
+        var image = Image("abc");
+        image.Backgrounds[0] = 0x102030;
+        image.Backgrounds[1] = 0x102030;
+
+        Draw(renderer, image);
+
+        Regex.Matches(terminal.Output, @"\e\[48;2;").Count.ShouldBe(1);
+        terminal.Output.ShouldContain("\e[48;2;16;32;48mab\e[49mc");
+    }
+
+    [Fact]
     public void Sem_cor_nao_envia_codigo_de_cor()
     {
         var terminal = new FakeTerminal();
