@@ -154,7 +154,7 @@ public sealed class PlayerTests
     {
         var terminal = new FakeTerminal { KeysAfterWrites = { [1] = ConsoleKey.Spacebar, [2] = ConsoleKey.RightArrow } };
 
-        Play(new FakeVideoSource(frameCount: 100, fps: 10), terminal, fps: 10)
+        Play(new FakeVideoSource(frameCount: 100, fps: 10), terminal, fps: 10, duration: TimeSpan.FromSeconds(10))
             .ShouldBe(PlaybackEnd.SeekTo(TimeSpan.FromSeconds(5), paused: true));
     }
 
@@ -164,7 +164,7 @@ public sealed class PlayerTests
         var video = new FakeVideoSource(frameCount: 100, fps: 10);
         var terminal = new FakeTerminal { KeysAfterWrites = { [2] = ConsoleKey.Escape } };
 
-        Play(video, terminal, fps: 10, startPaused: true).ShouldBe(PlaybackEnd.Stopped);
+        Play(video, terminal, fps: 10, duration: TimeSpan.FromSeconds(10), startPaused: true).ShouldBe(PlaybackEnd.Stopped);
 
         video.ReadFrames.ShouldBe([0]);
         terminal.Output.ShouldContain("pausado");
@@ -195,6 +195,18 @@ public sealed class PlayerTests
             .Play(TestContext.Current.CancellationToken);
 
         terminal.Output.Split("\e]0;filme · 10,0 fps · 0 pulados").Length.ShouldBe(3);
+    }
+
+    [Fact]
+    public void Sem_duracao_nao_pausa_nem_pula()
+    {
+        var video = new FakeVideoSource(frameCount: 5, fps: 10);
+        var terminal = new FakeTerminal { KeysAfterWrites = { [1] = ConsoleKey.Spacebar, [2] = ConsoleKey.RightArrow } };
+
+        Play(video, terminal, fps: 10).ShouldBe(PlaybackEnd.Finished);
+
+        _clock.Paused.ShouldBeFalse();
+        video.ReadFrames.Count.ShouldBe(5);
     }
 
     private PlaybackEnd Play(
