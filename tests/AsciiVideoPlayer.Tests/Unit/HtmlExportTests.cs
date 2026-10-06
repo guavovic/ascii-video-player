@@ -41,7 +41,7 @@ public sealed class HtmlExportTests
     public void Exporta_os_quadros_no_fps_pedido_numa_pagina_que_toca_sozinha()
     {
         var video = new FakeVideoSource(frameCount: 10, fps: 10);
-        var exporter = new HtmlExporter(new AsciiConverter(new CharacterPalette(CharacterPalette.DefaultCharacters)), color: true);
+        var exporter = new HtmlExporter(new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters))), color: true);
         var output = new StringWriter();
 
         int frames = exporter.Export(video, fps: 5, columns: 16, title: "Teste <1>", output);

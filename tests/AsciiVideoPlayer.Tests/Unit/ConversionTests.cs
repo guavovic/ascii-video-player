@@ -27,7 +27,7 @@ public sealed class ConversionTests
         bluishGreen.CopyTo(frame.Pixels, VideoFrame.BytesPerPixel);
         var image = new AsciiImage(2, 1);
 
-        new AsciiConverter(new CharacterPalette(" .#")).Convert(frame, image);
+        new AsciiStyle(new CharacterPalette(" .#")).Convert(frame, image);
 
         image.Characters.ShouldBe([' ', '.']);
         image.Colors.ShouldBe([0x000000, 0x00FFC8]);
@@ -39,7 +39,7 @@ public sealed class ConversionTests
     [InlineData(0, 0, 0, 0x000000)]
     public void Cor_vai_ao_brilho_maximo_mantendo_o_tom(int red, int green, int blue, int expected)
     {
-        AsciiConverter.AtFullBrightness(red, green, blue).ShouldBe(expected);
+        Rgb.AtFullBrightness(red, green, blue).ShouldBe(expected);
     }
 
     [Fact]

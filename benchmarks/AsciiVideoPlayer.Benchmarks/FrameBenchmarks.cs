@@ -35,7 +35,7 @@ public class FrameBenchmarks
         _frame = new VideoFrame(columns, rows);
         _image = new AsciiImage(columns, rows);
         _layout = new FrameLayout(columns, rows, 0, 0);
-        _converter = new AsciiConverter(new CharacterPalette(CharacterPalette.DefaultCharacters));
+        _converter = new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters)));
         _colorRenderer = new TerminalRenderer(new NullTerminal(), color: true);
         _plainRenderer = new TerminalRenderer(new NullTerminal(), color: false);
 
