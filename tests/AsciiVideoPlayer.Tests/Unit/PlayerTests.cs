@@ -1,5 +1,6 @@
 using AsciiVideoPlayer.Ascii;
 using AsciiVideoPlayer.Playback;
+using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Tests.Fakes;
 
@@ -169,6 +170,19 @@ public sealed class PlayerTests
         terminal.Output.ShouldContain("pausado");
     }
 
+    [Fact]
+    public void Desenha_a_legenda_do_momento_por_cima_da_imagem()
+    {
+        var subtitles = new SubtitleTrack([new SubtitleCue(TimeSpan.FromSeconds(0.2), TimeSpan.FromSeconds(0.3), "Oi")]);
+        var drawn = new List<bool>();
+        var terminal = new FakeTerminal();
+        terminal = new FakeTerminal { OnWrite = () => drawn.Add(terminal.Output.EndsWith(" Oi \e[0m")) };
+
+        Play(new FakeVideoSource(frameCount: 4, fps: 10), terminal, fps: 10, subtitles: subtitles);
+
+        drawn.ShouldBe([false, false, true, false]);
+    }
+
     private PlaybackEnd Play(
         FakeVideoSource video,
         FakeTerminal terminal,
@@ -176,12 +190,13 @@ public sealed class PlayerTests
         CancellationToken? cancellationToken = null,
         TimeSpan start = default,
         TimeSpan duration = default,
-        bool startPaused = false)
+        bool startPaused = false,
+        SubtitleTrack? subtitles = null)
     {
         var converter = new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters)));
         var renderer = new TerminalRenderer(terminal, color: false);
 
-        return new Player(video, converter, renderer, _clock, fps, maxWidth: null, start, duration, startPaused)
+        return new Player(video, converter, renderer, _clock, fps, maxWidth: null, start, duration, startPaused, subtitles)
             .Play(cancellationToken ?? TestContext.Current.CancellationToken);
     }
 }

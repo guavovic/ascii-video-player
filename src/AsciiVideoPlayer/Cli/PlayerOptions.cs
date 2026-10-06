@@ -13,5 +13,6 @@ public sealed record PlayerOptions(
     bool NoAudio,
     bool NoColor,
     TimeSpan Start,
+    FileInfo? Subtitles,
     bool Loop,
     FileInfo? Export);
