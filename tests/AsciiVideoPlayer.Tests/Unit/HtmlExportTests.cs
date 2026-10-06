@@ -17,9 +17,9 @@ public sealed class HtmlExportTests
         image.Colors[0] = 0x102030;
         image.Colors[1] = 0xFF0000;
         image.Backgrounds[1] = 0x0000FF;
-        var cells = new byte[2 * HtmlExporter.BytesPerCell];
+        var cells = new byte[2 * CellEncoding.BytesPerCell];
 
-        HtmlExporter.EncodeCells(image, color: true, cells);
+        CellEncoding.Encode(image, color: true, cells);
 
         cells.ShouldBe(new byte[] { 0x61, 0, 0x10, 0x20, 0x30, 0, 0, 0, 0, 0x88, 0x25, 0xFF, 0, 0, 1, 0, 0, 0xFF });
     }
@@ -31,9 +31,9 @@ public sealed class HtmlExportTests
         image.Characters[0] = 'x';
         image.Colors[0] = 0xFF0000;
         image.Backgrounds[0] = 0x0000FF;
-        var cells = new byte[HtmlExporter.BytesPerCell];
+        var cells = new byte[CellEncoding.BytesPerCell];
 
-        HtmlExporter.EncodeCells(image, color: false, cells);
+        CellEncoding.Encode(image, color: false, cells);
 
         cells.ShouldBe(new byte[] { 0x78, 0, 0xCC, 0xCC, 0xCC, 0, 0, 0, 0 });
     }
@@ -52,13 +52,13 @@ public sealed class HtmlExportTests
         string page = output.ToString();
         page.ShouldStartWith("<!doctype html>");
         page.ShouldContain("<title>Teste &lt;1&gt;</title>");
-        page.ShouldContain("const fps = 5, colunas = 16, linhas = 4, total = 5,");
+        page.ShouldContain("const fps = 5, colunas = 16, linhas = 4, total = 5;");
 
         string data = Regex.Match(page, "const dados = \"([^\"]*)\"").Groups[1].Value;
         using var gzip = new GZipStream(new MemoryStream(Convert.FromBase64String(data)), CompressionMode.Decompress);
         using var raw = new MemoryStream();
         gzip.CopyTo(raw);
-        raw.Length.ShouldBe(5 * 16 * 4 * HtmlExporter.BytesPerCell);
+        raw.Length.ShouldBe(5 * 16 * 4 * CellEncoding.BytesPerCell);
         page.ShouldContain("const legendas = [];");
     }
 
