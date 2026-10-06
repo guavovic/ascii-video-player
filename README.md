@@ -1,5 +1,7 @@
 # ASCII Video Player
 
+[![NuGet](https://img.shields.io/nuget/v/ascii-video-player?label=NuGet)](https://www.nuget.org/packages/ascii-video-player)
+
 Player de vídeo para o terminal. Cada quadro vira texto em caracteres ASCII coloridos, ajustado ao tamanho da janela, com o áudio tocando junto. Roda no Windows, no Linux e no macOS.
 
 <p align="center">
