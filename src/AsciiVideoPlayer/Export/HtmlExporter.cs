@@ -15,7 +15,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
         double outputFps = Math.Min(fps, video.Fps);
         double step = video.Fps / outputFps;
         var layout = FrameLayout.Fit(video.Width, video.Height, columns, int.MaxValue, maxWidth: null);
-        var frame = new VideoFrame(layout.Columns, layout.Rows);
+        var frame = converter.CreateFrame(layout.Columns, layout.Rows);
         var image = new AsciiImage(layout.Columns, layout.Rows);
         var cells = new byte[layout.Columns * layout.Rows * BytesPerCell];
         using var compressed = new MemoryStream();
@@ -116,6 +116,22 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
               contexto.textBaseline = "middle";
             }
 
+            // Braille: bit de cada ponto como [coluna, linha] dentro da célula de 2×4.
+            const posicoes = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [0, 3], [1, 3]];
+
+            function pontos(bits, x, y) {
+              const raio = Math.min(largura / 2, altura / 4) * 0.4;
+              contexto.beginPath();
+              for (let bit = 0; bit < 8; bit++) {
+                if (!(bits & 1 << bit)) continue;
+                const [coluna, linha] = posicoes[bit];
+                const cx = x + (coluna + 0.5) * largura / 2, cy = y + (linha + 0.5) * altura / 4;
+                contexto.moveTo(cx + raio, cy);
+                contexto.arc(cx, cy, raio, 0, 2 * Math.PI);
+              }
+              contexto.fill();
+            }
+
             function desenhar() {
               const inicio = atual * colunas * linhas * celula;
               contexto.fillStyle = "#0c0c0c";
@@ -128,10 +144,13 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
                     contexto.fillRect(x, y, largura + 0.5, altura + 0.5);
                   }
                   const letra = quadros[c] | quadros[c + 1] << 8;
-                  if (letra !== 32) {
-                    contexto.fillStyle = `rgb(${quadros[c + 2]},${quadros[c + 3]},${quadros[c + 4]})`;
-                    contexto.fillText(String.fromCharCode(letra), x, y + altura / 2);
-                  }
+                  if (letra === 32) continue;
+                  contexto.fillStyle = `rgb(${quadros[c + 2]},${quadros[c + 3]},${quadros[c + 4]})`;
+                  if (letra === 0x2580) contexto.fillRect(x, y, largura + 0.5, altura / 2 + 0.5);
+                  else if (letra === 0x2584) contexto.fillRect(x, y + altura / 2, largura + 0.5, altura / 2 + 0.5);
+                  else if (letra === 0x2588) contexto.fillRect(x, y, largura + 0.5, altura + 0.5);
+                  else if (letra > 0x2800 && letra <= 0x28FF) pontos(letra - 0x2800, x, y);
+                  else contexto.fillText(String.fromCharCode(letra), x, y + altura / 2);
                 }
               }
               atual = (atual + 1) % total;

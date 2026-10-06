@@ -17,7 +17,7 @@ public sealed class Player(
         var displayInterval = TimeSpan.FromSeconds(1 / Math.Min(fps, video.Fps));
         var nextDisplay = TimeSpan.Zero;
         long nextFrameIndex = 0;
-        var frame = new VideoFrame(0, 0);
+        var frame = converter.CreateFrame(0, 0);
         var image = new AsciiImage(0, 0);
 
         clock.Start();
@@ -42,9 +42,9 @@ public sealed class Player(
 
             var layout = renderer.Fit(video.Width, video.Height, maxWidth);
 
-            if (frame.Width != layout.Columns || frame.Height != layout.Rows)
+            if (image.Width != layout.Columns || image.Height != layout.Rows)
             {
-                frame = new VideoFrame(layout.Columns, layout.Rows);
+                frame = converter.CreateFrame(layout.Columns, layout.Rows);
                 image = new AsciiImage(layout.Columns, layout.Rows);
             }
 

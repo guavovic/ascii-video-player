@@ -105,7 +105,7 @@ public sealed class PlayerTests
 
     private PlaybackEnd Play(FakeVideoSource video, FakeTerminal terminal, double fps, CancellationToken? cancellationToken = null)
     {
-        var converter = new AsciiConverter(new CharacterPalette(CharacterPalette.DefaultCharacters));
+        var converter = new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters)));
         var renderer = new TerminalRenderer(terminal, color: false);
 
         return new Player(video, converter, renderer, _clock, fps, maxWidth: null)

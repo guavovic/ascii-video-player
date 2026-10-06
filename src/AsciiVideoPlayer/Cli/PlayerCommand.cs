@@ -13,6 +13,8 @@ namespace AsciiVideoPlayer.Cli;
 
 public static class PlayerCommand
 {
+    private const int DefaultExportColumns = 120;
+
     public static RootCommand Create()
     {
         var video = new Argument<FileInfo>("video")
@@ -37,6 +39,13 @@ public static class PlayerCommand
             if (string.IsNullOrEmpty(result.GetValue(palette)))
                 result.AddError("A paleta precisa de pelo menos um caractere.");
         });
+
+        var style = new Option<ImageStyle>("--style", "-s")
+        {
+            Description = "Como desenhar a imagem: ascii (letras pelo brilho), blocks (meio bloco, o dobro de resolução vertical), " +
+                "braille (2×4 pontos por caractere), dither (braille pontilhado) ou edges (ASCII com contornos).",
+            DefaultValueFactory = _ => ImageStyle.Ascii,
+        };
 
         var noAudio = new Option<bool>("--no-audio")
         {
@@ -65,7 +74,7 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, noAudio, noColor, loop, export,
+            video, width, fps, palette, style, noAudio, noColor, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -73,12 +82,66 @@ public static class PlayerCommand
             result.GetValue(width),
             result.GetValue(fps),
             result.GetValue(palette)!,
+            result.GetValue(style),
             result.GetValue(noAudio),
             result.GetValue(noColor),
             result.GetValue(loop),
             result.GetValue(export))));
 
         return command;
+    }
+
+    private static int Run(PlayerOptions options)
+    {
+        string path = options.Video.FullName;
+
+        if (options.Export is null && Console.IsOutputRedirected)
+        {
+            Console.Error.WriteLine("O player precisa de um terminal para desenhar, e a saída está redirecionada.");
+            return 1;
+        }
+
+        MediaInfo? info;
+
+        try
+        {
+            info = FFmpeg.Probe(path);
+        }
+        catch (FFmpegNotFoundException)
+        {
+            Console.Error.WriteLine("O FFmpeg não foi encontrado. Instale o FFmpeg (com o ffmpeg e o ffprobe no PATH) e tente de novo.");
+            return 1;
+        }
+
+        if (info is null)
+        {
+            Console.Error.WriteLine($"Não foi possível abrir o vídeo: {path}");
+            return 1;
+        }
+
+        bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
+        var converter = new AsciiConverter(ImageStyles.Create(options.Style, new CharacterPalette(options.Palette), color));
+
+        if (options.Export is not null)
+            return Export(options, path, info, converter, color);
+
+        Console.Title = Path.GetFileNameWithoutExtension(path);
+        var renderer = new TerminalRenderer(new ConsoleTerminal(), color);
+
+        using var session = new TerminalSession();
+
+        PlaybackLoop.Run(() =>
+        {
+            using var video = new FFmpegVideoSource(path, info);
+            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
+
+            IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
+            var player = new Player(video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width);
+
+            return player.Play(session.Cancellation);
+        }, options.Loop);
+
+        return 0;
     }
 
     private static int Export(PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color)
@@ -115,59 +178,5 @@ public static class PlayerCommand
                 return null;
             },
         };
-    }
-
-    private const int DefaultExportColumns = 120;
-
-    private static int Run(PlayerOptions options)
-    {
-        string path = options.Video.FullName;
-
-        if (options.Export is null && Console.IsOutputRedirected)
-        {
-            Console.Error.WriteLine("O player precisa de um terminal para desenhar, e a saída está redirecionada.");
-            return 1;
-        }
-
-        MediaInfo? info;
-
-        try
-        {
-            info = FFmpeg.Probe(path);
-        }
-        catch (FFmpegNotFoundException)
-        {
-            Console.Error.WriteLine("O FFmpeg não foi encontrado. Instale o FFmpeg (com o ffmpeg e o ffprobe no PATH) e tente de novo.");
-            return 1;
-        }
-
-        if (info is null)
-        {
-            Console.Error.WriteLine($"Não foi possível abrir o vídeo: {path}");
-            return 1;
-        }
-
-        bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
-        var converter = new AsciiConverter(new CharacterPalette(options.Palette));
-        if (options.Export is not null)
-            return Export(options, path, info, converter, color);
-
-        Console.Title = Path.GetFileNameWithoutExtension(path);
-        var renderer = new TerminalRenderer(new ConsoleTerminal(), color);
-
-        using var session = new TerminalSession();
-
-        PlaybackLoop.Run(() =>
-        {
-            using var video = new FFmpegVideoSource(path, info);
-            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
-
-            IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
-            var player = new Player(video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width);
-
-            return player.Play(session.Cancellation);
-        }, options.Loop);
-
-        return 0;
     }
 }
