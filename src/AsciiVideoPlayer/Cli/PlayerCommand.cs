@@ -94,6 +94,11 @@ public static class PlayerCommand
         };
         subtitles.AcceptExistingOnly();
 
+        var stats = new Option<bool>("--stats")
+        {
+            Description = "Mostra no título da janela, uma vez por segundo, o FPS, os quadros pulados, os bytes por quadro e o tempo de desenho.",
+        };
+
         var loop = new Option<bool>("--loop")
         {
             Description = "Recomeça o vídeo quando ele acaba, até apertar Esc ou Ctrl+C.",
@@ -111,7 +116,7 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, subtitles, loop, export,
+            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, subtitles, stats, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -126,6 +131,7 @@ public static class PlayerCommand
             result.GetValue(noColor),
             result.GetValue(start),
             result.GetValue(subtitles),
+            result.GetValue(stats),
             result.GetValue(loop),
             result.GetValue(export))));
 
@@ -169,10 +175,12 @@ public static class PlayerCommand
         if (options.Export is not null)
             return Export(options, path, info, converter, color, subtitles);
 
-        Console.Title = Path.GetFileNameWithoutExtension(path);
+        string name = Path.GetFileNameWithoutExtension(path);
         var renderer = new TerminalRenderer(new ConsoleTerminal(), color, options.ColorTolerance);
+        var stats = options.Stats ? new PlaybackStats(name) : null;
 
         using var session = new TerminalSession();
+        Console.Title = name;
 
         PlaybackLoop.Run((start, paused) =>
         {
@@ -181,7 +189,7 @@ public static class PlayerCommand
 
             IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
             var player = new Player(
-                video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width, start, info.Duration, paused, subtitles);
+                video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width, start, info.Duration, paused, subtitles, stats);
 
             return player.Play(session.Cancellation);
         }, options.Start, options.Loop);

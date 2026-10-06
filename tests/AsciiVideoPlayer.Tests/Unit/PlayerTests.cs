@@ -183,6 +183,20 @@ public sealed class PlayerTests
         drawn.ShouldBe([false, false, true, false]);
     }
 
+    [Fact]
+    public void Com_estatisticas_escreve_no_titulo_uma_vez_por_segundo()
+    {
+        var terminal = new FakeTerminal();
+        var converter = new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters)));
+        var renderer = new TerminalRenderer(terminal, color: false);
+        var stats = new PlaybackStats("filme");
+
+        new Player(new FakeVideoSource(frameCount: 25, fps: 10), converter, renderer, _clock, fps: 10, maxWidth: null, stats: stats)
+            .Play(TestContext.Current.CancellationToken);
+
+        terminal.Output.Split("\e]0;filme · 10,0 fps · 0 pulados").Length.ShouldBe(3);
+    }
+
     private PlaybackEnd Play(
         FakeVideoSource video,
         FakeTerminal terminal,

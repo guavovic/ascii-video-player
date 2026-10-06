@@ -15,7 +15,8 @@ public sealed partial class TerminalSession : IDisposable
 
         Console.OutputEncoding = Encoding.UTF8;
         Console.CancelKeyPress += OnCancelKeyPress;
-        Console.Out.Write("\e[?1049h\e[?25l");
+        // Guarda o título da janela e devolve ao sair (22;0t e 23;0t, do xterm); quem não entende ignora.
+        Console.Out.Write("\e[22;0t\e[?1049h\e[?25l");
         Console.Out.Flush();
     }
 
@@ -24,7 +25,7 @@ public sealed partial class TerminalSession : IDisposable
     public void Dispose()
     {
         Console.CancelKeyPress -= OnCancelKeyPress;
-        Console.Out.Write("\e[0m\e[?25h\e[?1049l");
+        Console.Out.Write("\e[0m\e[?25h\e[?1049l\e[23;0t");
         Console.Out.Flush();
         Console.OutputEncoding = _previousEncoding;
         _cancellation.Dispose();

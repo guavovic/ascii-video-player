@@ -30,6 +30,8 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
 
     public int Columns => terminal.Columns;
 
+    public int LastFrameBytes { get; private set; }
+
     public void Draw(AsciiImage image, FrameLayout layout, Overlay overlay = default)
     {
         _buffer.ResetWrittenCount();
@@ -78,6 +80,16 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
 
         _terminalBackground = currentBackground;
         DrawOverlay(overlay);
+        LastFrameBytes = _buffer.WrittenCount;
+        terminal.Write(_buffer.WrittenSpan);
+    }
+
+    public void SetTitle(string title)
+    {
+        _buffer.ResetWrittenCount();
+        Append("\e]0;"u8);
+        AppendText(title.Replace('\e', ' ').Replace('\a', ' '));
+        Append("\a"u8);
         terminal.Write(_buffer.WrittenSpan);
     }
 

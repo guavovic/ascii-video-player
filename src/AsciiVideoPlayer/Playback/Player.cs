@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AsciiVideoPlayer.Ascii;
 using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Terminal;
@@ -15,7 +16,8 @@ public sealed class Player(
     TimeSpan start = default,
     TimeSpan duration = default,
     bool startPaused = false,
-    SubtitleTrack? subtitles = null)
+    SubtitleTrack? subtitles = null,
+    PlaybackStats? stats = null)
 {
     public static readonly TimeSpan ShortSeek = TimeSpan.FromSeconds(5);
     public static readonly TimeSpan LongSeek = TimeSpan.FromMinutes(1);
@@ -71,6 +73,8 @@ public sealed class Player(
 
             long currentFrameIndex = (long)(now.TotalSeconds * video.Fps);
 
+            stats?.RecordSkipped((int)Math.Max(0, currentFrameIndex - nextFrameIndex));
+
             for (; nextFrameIndex < currentFrameIndex; nextFrameIndex++)
             {
                 if (!video.SkipFrame())
@@ -90,7 +94,16 @@ public sealed class Player(
 
             nextFrameIndex++;
             converter.Convert(_frame, _image);
+            long drawStart = Stopwatch.GetTimestamp();
             renderer.Draw(_image, _layout, OverlayAt(paused: false, showStatus: now < _statusUntil));
+
+            if (stats is not null)
+            {
+                stats.RecordFrame(renderer.LastFrameBytes, Stopwatch.GetElapsedTime(drawStart));
+
+                if (stats.Report(now) is { } report)
+                    renderer.SetTitle(report);
+            }
 
             nextDisplay += displayInterval;
 
