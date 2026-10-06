@@ -47,7 +47,7 @@ public sealed class Player(
         {
             var key = renderer.ReadKey();
 
-            if (key is ConsoleKey.Spacebar)
+            if (key is ConsoleKey.Spacebar && CanSeek)
                 pausePending = true;
             else if (HandleKey(key, paused: false) is { } end)
                 return end;
@@ -138,9 +138,13 @@ public sealed class Player(
         return PlaybackEnd.Stopped;
     }
 
+    // Sem duração (câmera, transmissão ao vivo), não tem para onde pular, e pausar só acumularia atraso.
+    private bool CanSeek => duration > TimeSpan.Zero;
+
     private PlaybackEnd? HandleKey(ConsoleKey? key, bool paused) => key switch
     {
         ConsoleKey.Escape or ConsoleKey.Q => PlaybackEnd.Stopped,
+        _ when !CanSeek => null,
         ConsoleKey.RightArrow => SeekBy(ShortSeek, paused),
         ConsoleKey.LeftArrow => SeekBy(-ShortSeek, paused),
         ConsoleKey.UpArrow => SeekBy(LongSeek, paused),
@@ -155,7 +159,7 @@ public sealed class Player(
         if (target < TimeSpan.Zero)
             target = TimeSpan.Zero;
 
-        if (duration > TimeSpan.Zero && target >= duration)
+        if (target >= duration)
             return PlaybackEnd.Finished;
 
         return PlaybackEnd.SeekTo(target, paused);

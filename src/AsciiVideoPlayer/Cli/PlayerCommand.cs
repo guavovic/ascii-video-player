@@ -15,14 +15,25 @@ namespace AsciiVideoPlayer.Cli;
 public static class PlayerCommand
 {
     private const int DefaultExportColumns = 120;
+    private const string FFmpegMissing = "O FFmpeg não foi encontrado. Instale o FFmpeg (com o ffmpeg e o ffprobe no PATH) e tente de novo.";
 
     public static RootCommand Create()
     {
-        var video = new Argument<FileInfo>("video")
+        var video = new Argument<string?>("video")
         {
-            Description = "Arquivo de vídeo a ser tocado.",
+            Description = "Arquivo de vídeo ou link (http, https). Links de sites como o YouTube precisam do yt-dlp instalado.",
+            Arity = ArgumentArity.ZeroOrOne,
         };
-        video.AcceptExistingOnly();
+
+        var camera = new Option<string?>("--camera")
+        {
+            Description = "Toca a câmera com esse nome, ao vivo, em vez de um vídeo. Os nomes saem no --list-cameras.",
+        };
+
+        var listCameras = new Option<bool>("--list-cameras")
+        {
+            Description = "Lista os nomes das câmeras, sem abrir nenhuma, e sai.",
+        };
 
         var width = PositiveNumberOption<int>(
             "--width", "-w", "Largura máxima em colunas. Padrão: a largura do terminal.");
@@ -116,11 +127,26 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, subtitles, stats, loop, export,
+            video, camera, listCameras, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, subtitles, stats, loop, export,
         };
 
-        command.SetAction(result => Run(new PlayerOptions(
-            result.GetValue(video)!,
+        command.Validators.Add(result =>
+        {
+            bool hasVideo = result.GetValue(video) is not null;
+            bool hasCamera = result.GetValue(camera) is not null;
+
+            if (result.GetValue(listCameras))
+                return;
+
+            if (hasVideo == hasCamera)
+                result.AddError("Informe um vídeo ou uma câmera (--camera), um dos dois.");
+            else if (hasCamera && result.GetValue(export) is not null)
+                result.AddError("--export não funciona com a câmera, porque ela não tem fim.");
+        });
+
+        command.SetAction(result => result.GetValue(listCameras) ? ListCameras() : Run(new PlayerOptions(
+            result.GetValue(video),
+            result.GetValue(camera),
             result.GetValue(width),
             result.GetValue(fps),
             result.GetValue(palette)!,
@@ -138,31 +164,48 @@ public static class PlayerCommand
         return command;
     }
 
+    private static int ListCameras()
+    {
+        try
+        {
+            var cameras = Cameras.List();
+
+            if (cameras.Count == 0)
+                Console.WriteLine("Nenhuma câmera encontrada.");
+
+            foreach (string camera in cameras)
+                Console.WriteLine(camera);
+
+            return 0;
+        }
+        catch (FFmpegNotFoundException)
+        {
+            Console.Error.WriteLine(FFmpegMissing);
+            return 1;
+        }
+    }
+
     private static int Run(PlayerOptions options)
     {
-        string path = options.Video.FullName;
-
         if (options.Export is null && Console.IsOutputRedirected)
         {
             Console.Error.WriteLine("O player precisa de um terminal para desenhar, e a saída está redirecionada.");
             return 1;
         }
 
+        MediaInput input;
         MediaInfo? info;
 
         try
         {
-            info = FFmpeg.Probe(path);
+            if (Open(options) is not { } opened)
+                return 1;
+
+            (input, info) = opened;
         }
         catch (FFmpegNotFoundException)
         {
-            Console.Error.WriteLine("O FFmpeg não foi encontrado. Instale o FFmpeg (com o ffmpeg e o ffprobe no PATH) e tente de novo.");
-            return 1;
-        }
-
-        if (info is null)
-        {
-            Console.Error.WriteLine($"Não foi possível abrir o vídeo: {path}");
+            Console.Error.WriteLine(FFmpegMissing);
             return 1;
         }
 
@@ -170,12 +213,16 @@ public static class PlayerCommand
         var converter = new AsciiConverter(
             ImageStyles.Create(options.Style, new CharacterPalette(options.Palette), color), options.ColorSteps);
 
-        var subtitles = LoadSubtitles(options.Subtitles?.FullName ?? Path.ChangeExtension(path, ".srt"), options.Subtitles is not null);
+        var subtitles = options.Subtitles is not null
+            ? LoadSubtitles(options.Subtitles.FullName)
+            : input.IsFile && File.Exists(Path.ChangeExtension(input.Location, ".srt"))
+                ? LoadSubtitles(Path.ChangeExtension(input.Location, ".srt"))
+                : null;
 
         if (options.Export is not null)
-            return Export(options, path, info, converter, color, subtitles);
+            return Export(options, input, info, converter, color, subtitles);
 
-        string name = Path.GetFileNameWithoutExtension(path);
+        string name = input.Name;
         var renderer = new TerminalRenderer(new ConsoleTerminal(), color, options.ColorTolerance);
         var stats = options.Stats ? new PlaybackStats(name) : null;
 
@@ -184,8 +231,8 @@ public static class PlayerCommand
 
         PlaybackLoop.Run((start, paused) =>
         {
-            using var video = new FFmpegVideoSource(path, info, start);
-            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path, start) : null;
+            using var video = new FFmpegVideoSource(input, info, start);
+            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(input, start) : null;
 
             IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
             var player = new Player(
@@ -197,11 +244,52 @@ public static class PlayerCommand
         return 0;
     }
 
-    private static SubtitleTrack? LoadSubtitles(string path, bool requested)
+    private static (MediaInput Input, MediaInfo Info)? Open(PlayerOptions options)
     {
-        if (!requested && !File.Exists(path))
-            return null;
+        if (options.Camera is { } camera)
+        {
+            var cameraInput = MediaInput.FromCamera(camera);
 
+            if (FFmpeg.Probe(cameraInput) is { } cameraInfo)
+                return (cameraInput, cameraInfo);
+
+            Console.Error.WriteLine($"Não foi possível abrir a câmera \"{camera}\". Veja os nomes com --list-cameras.");
+            return null;
+        }
+
+        string video = options.Video!;
+
+        if (!MediaInput.IsUrl(video))
+        {
+            if (!File.Exists(video))
+            {
+                Console.Error.WriteLine($"Arquivo não encontrado: {video}");
+                return null;
+            }
+
+            var file = MediaInput.FromFile(video);
+
+            if (FFmpeg.Probe(file) is { } fileInfo)
+                return (file, fileInfo);
+
+            Console.Error.WriteLine($"Não foi possível abrir o vídeo: {file.Location}");
+            return null;
+        }
+
+        var url = MediaInput.FromUrl(video);
+
+        if (FFmpeg.Probe(url) is { } urlInfo)
+            return (url, urlInfo);
+
+        if (YtDlp.Resolve(video) is { } resolved && FFmpeg.Probe(resolved) is { } resolvedInfo)
+            return (resolved, resolvedInfo with { HasAudio = resolvedInfo.HasAudio || resolved.AudioLocation is not null });
+
+        Console.Error.WriteLine($"Não foi possível abrir o link: {video}. Para sites como o YouTube, instale o yt-dlp.");
+        return null;
+    }
+
+    private static SubtitleTrack? LoadSubtitles(string path)
+    {
         try
         {
             return SubtitleTrack.Load(path);
@@ -214,16 +302,16 @@ public static class PlayerCommand
     }
 
     private static int Export(
-        PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color, SubtitleTrack? subtitles)
+        PlayerOptions options, MediaInput input, MediaInfo info, AsciiConverter converter, bool color, SubtitleTrack? subtitles)
     {
-        using var video = new FFmpegVideoSource(path, info, options.Start);
+        using var video = new FFmpegVideoSource(input, info, options.Start);
         using var output = new StreamWriter(options.Export!.FullName, append: false, new System.Text.UTF8Encoding(false));
 
         int frames = new HtmlExporter(converter, color).Export(
             video,
             options.Fps ?? video.Fps,
             options.Width ?? DefaultExportColumns,
-            Path.GetFileNameWithoutExtension(path),
+            input.Name,
             output,
             count => Console.Error.Write($"\rExportando: {count} quadros"),
             subtitles,

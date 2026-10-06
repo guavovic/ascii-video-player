@@ -9,13 +9,13 @@ public static class FFmpeg
 {
     private const double FallbackFps = 30;
 
-    public static MediaInfo? Probe(string path)
+    public static MediaInfo? Probe(MediaInput input)
     {
-        using var process = Start("ffprobe",
+        using var process = Start("ffprobe", [
             "-v", "error",
             "-show_entries", "format=duration:stream=codec_type,width,height,avg_frame_rate,r_frame_rate:stream_side_data=rotation:stream_tags=rotate",
             "-of", "json",
-            path);
+            .. input.Arguments(TimeSpan.Zero)]);
 
         string output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
@@ -53,7 +53,10 @@ public static class FFmpeg
             : new MediaInfo(width.GetInt32(), height.GetInt32(), fps, hasAudio, duration);
     }
 
-    public static Process Start(string program, params string[] arguments)
+    public static Process Start(string program, params string[] arguments) => Start(program, arguments, readErrors: false);
+
+    // Com readErrors, quem chamou lê a saída de erro (a lista de câmeras do FFmpeg sai por ela).
+    public static Process Start(string program, string[] arguments, bool readErrors)
     {
         var startInfo = new ProcessStartInfo(program)
         {
@@ -69,8 +72,13 @@ public static class FFmpeg
         try
         {
             var process = Process.Start(startInfo)!;
-            process.ErrorDataReceived += (_, _) => { };
-            process.BeginErrorReadLine();
+
+            if (!readErrors)
+            {
+                process.ErrorDataReceived += (_, _) => { };
+                process.BeginErrorReadLine();
+            }
+
             return process;
         }
         catch (Win32Exception ex)

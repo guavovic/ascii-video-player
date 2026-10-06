@@ -13,7 +13,7 @@ public sealed class FFmpegVideoSource : IVideoSource
     private readonly int _decodedWidth;
     private readonly int _decodedHeight;
 
-    public FFmpegVideoSource(string path, MediaInfo info, TimeSpan start = default)
+    public FFmpegVideoSource(MediaInput input, MediaInfo info, TimeSpan start = default)
     {
         Width = info.Width;
         Height = info.Height;
@@ -25,10 +25,9 @@ public sealed class FFmpegVideoSource : IVideoSource
 
         _process = FFmpeg.Start("ffmpeg", [
             "-nostdin", "-v", "error",
-            .. FFmpeg.StartAt(start),
-            "-i", path,
+            .. input.Arguments(start),
             "-map", "0:v:0",
-            "-vf", $"scale={_decodedWidth}:{_decodedHeight}:flags=area",
+            "-vf", $"{(input.Live ? "hflip," : "")}scale={_decodedWidth}:{_decodedHeight}:flags=area",
             "-r", FFmpeg.Format(info.Fps),
             "-f", "rawvideo", "-pix_fmt", "bgr24",
             "pipe:1"]);

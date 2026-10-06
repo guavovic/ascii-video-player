@@ -29,7 +29,7 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
     private long _playedBytes;
     private TimeSpan _endPosition;
 
-    private OpenAlAudioPlayer(string path, TimeSpan start)
+    private OpenAlAudioPlayer(MediaInput input, TimeSpan start)
     {
         _device = _alc.OpenDevice("");
 
@@ -44,8 +44,7 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
 
         _decoder = FFmpeg.Start("ffmpeg", [
             "-nostdin", "-v", "error",
-            .. FFmpeg.StartAt(start),
-            "-i", path,
+            .. input.AudioArguments(start),
             "-map", "0:a:0",
             "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", SampleRate.ToString(),
             "pipe:1"]);
@@ -67,11 +66,11 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
         }
     }
 
-    public static OpenAlAudioPlayer? TryOpen(string path, TimeSpan start = default)
+    public static OpenAlAudioPlayer? TryOpen(MediaInput input, TimeSpan start = default)
     {
         try
         {
-            return new OpenAlAudioPlayer(path, start);
+            return new OpenAlAudioPlayer(input, start);
         }
         catch (Exception ex)
         {

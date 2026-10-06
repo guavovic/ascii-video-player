@@ -3,7 +3,8 @@ using AsciiVideoPlayer.Ascii;
 namespace AsciiVideoPlayer.Cli;
 
 public sealed record PlayerOptions(
-    FileInfo Video,
+    string? Video,
+    string? Camera,
     int? Width,
     double? Fps,
     string Palette,
