@@ -47,9 +47,14 @@ public static class PlayerCommand
             Description = "Desenha sem cores. A variável de ambiente NO_COLOR tem o mesmo efeito.",
         };
 
+        var loop = new Option<bool>("--loop")
+        {
+            Description = "Recomeça o vídeo quando ele acaba, até apertar Esc ou Ctrl+C.",
+        };
+
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, noAudio, noColor,
+            video, width, fps, palette, noAudio, noColor, loop,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -58,7 +63,8 @@ public static class PlayerCommand
             result.GetValue(fps),
             result.GetValue(palette)!,
             result.GetValue(noAudio),
-            result.GetValue(noColor))));
+            result.GetValue(noColor),
+            result.GetValue(loop))));
 
         return command;
     }
@@ -112,19 +118,23 @@ public static class PlayerCommand
 
         Console.Title = Path.GetFileNameWithoutExtension(path);
 
-        using var video = new FFmpegVideoSource(path, info);
-        using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
-
         bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
-
-        IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
-
         var converter = new AsciiConverter(new CharacterPalette(options.Palette));
-        var player = new Player(
-            video, converter, new TerminalRenderer(new ConsoleTerminal(), color), clock, options.Fps ?? video.Fps, options.Width);
+        var renderer = new TerminalRenderer(new ConsoleTerminal(), color);
 
         using var session = new TerminalSession();
-        player.Play(session.Cancellation);
+
+        PlaybackLoop.Run(() =>
+        {
+            using var video = new FFmpegVideoSource(path, info);
+            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
+
+            IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
+            var player = new Player(video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width);
+
+            return player.Play(session.Cancellation);
+        }, options.Loop);
+
         return 0;
     }
 }
