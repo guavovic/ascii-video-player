@@ -87,10 +87,24 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Escrever as notas em português
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$GITHUB_REF_NAME" -q .body \
+            | sed -E \
+              -e '/^## New Contributors/,/^$/d' \
+              -e 's/^## What.s Changed/## O que mudou/' \
+              -e 's/^\* (.*) by @[^ ]+ in https:\/\/github\.com\/[^ ]+\/pull\/([0-9]+)$/- \1 (#\2)/' \
+              -e 's/^- [a-z]+(\([^)]*\))?!?: (.)/- \u\2/' \
+              -e 's/^\*\*Full Changelog\*\*: (https:\/\/[^ ]+\/compare\/([^ ]+))$/**Histórico completo:** [\2](\1)/' \
+            | cat -s > notas.md
+          cat notas.md
+
       - name: Criar a release com os binários
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file notas.md
 
   nuget:
     name: Publicar no NuGet
