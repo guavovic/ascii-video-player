@@ -12,7 +12,7 @@ public sealed class Player(
     double fps,
     int? maxWidth)
 {
-    public void Play(CancellationToken cancellationToken)
+    public PlaybackEnd Play(CancellationToken cancellationToken)
     {
         var displayInterval = TimeSpan.FromSeconds(1 / Math.Min(fps, video.Fps));
         var nextDisplay = TimeSpan.Zero;
@@ -37,7 +37,7 @@ public sealed class Player(
             for (; nextFrameIndex < currentFrameIndex; nextFrameIndex++)
             {
                 if (!video.SkipFrame())
-                    return;
+                    return PlaybackEnd.Finished;
             }
 
             var layout = renderer.Fit(video.Width, video.Height, maxWidth);
@@ -49,7 +49,7 @@ public sealed class Player(
             }
 
             if (!video.TryReadFrame(frame))
-                return;
+                return PlaybackEnd.Finished;
 
             nextFrameIndex++;
             converter.Convert(frame, image);
@@ -61,7 +61,9 @@ public sealed class Player(
                 nextDisplay = now;
 
             if (renderer.EscapePressed())
-                return;
+                return PlaybackEnd.Stopped;
         }
+
+        return PlaybackEnd.Stopped;
     }
 }

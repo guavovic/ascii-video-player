@@ -81,12 +81,34 @@ public sealed class PlayerTests
         _clock.Started.ShouldBeTrue();
     }
 
-    private void Play(FakeVideoSource video, FakeTerminal terminal, double fps, CancellationToken? cancellationToken = null)
+    [Fact]
+    public void Diz_que_terminou_quando_o_video_acaba()
+    {
+        Play(new FakeVideoSource(frameCount: 3, fps: 10), new FakeTerminal(), fps: 10).ShouldBe(PlaybackEnd.Finished);
+    }
+
+    [Fact]
+    public void Diz_que_parou_quando_o_esc_e_apertado()
+    {
+        Play(new FakeVideoSource(frameCount: 10, fps: 10), new FakeTerminal { EscapeAfterWrites = 2 }, fps: 10)
+            .ShouldBe(PlaybackEnd.Stopped);
+    }
+
+    [Fact]
+    public void Diz_que_parou_quando_a_reproducao_e_cancelada()
+    {
+        using var cancellation = new CancellationTokenSource();
+
+        Play(new FakeVideoSource(frameCount: 10, fps: 10), new FakeTerminal { OnWrite = cancellation.Cancel }, fps: 10, cancellation.Token)
+            .ShouldBe(PlaybackEnd.Stopped);
+    }
+
+    private PlaybackEnd Play(FakeVideoSource video, FakeTerminal terminal, double fps, CancellationToken? cancellationToken = null)
     {
         var converter = new AsciiConverter(new CharacterPalette(CharacterPalette.DefaultCharacters));
         var renderer = new TerminalRenderer(terminal, color: false);
 
-        new Player(video, converter, renderer, _clock, fps, maxWidth: null)
+        return new Player(video, converter, renderer, _clock, fps, maxWidth: null)
             .Play(cancellationToken ?? TestContext.Current.CancellationToken);
     }
 }
