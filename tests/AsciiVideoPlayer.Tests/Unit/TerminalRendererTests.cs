@@ -82,6 +82,49 @@ public sealed class TerminalRendererTests
     }
 
     [Fact]
+    public void Reaproveita_a_cor_anterior_dentro_da_tolerancia()
+    {
+        var terminal = new FakeTerminal();
+        var renderer = new TerminalRenderer(terminal, color: true, colorTolerance: 16);
+        var image = Image("abc");
+        image.Colors[0] = 0x808080;
+        image.Colors[1] = 0x858A80;
+        image.Colors[2] = 0x8A8A8A;
+
+        Draw(renderer, image);
+
+        terminal.Output.ShouldContain("\e[38;2;128;128;128mab\e[38;2;138;138;138mc");
+    }
+
+    [Fact]
+    public void Nao_envia_a_cor_da_letra_para_espaco()
+    {
+        var terminal = new FakeTerminal();
+        var renderer = new TerminalRenderer(terminal, color: true);
+        var image = Image("a b");
+        image.Colors[0] = 0xFF0000;
+        image.Colors[1] = 0x00FF00;
+        image.Colors[2] = 0xFF0000;
+
+        Draw(renderer, image);
+
+        terminal.Output.ShouldContain("\e[38;2;255;0;0ma b");
+    }
+
+    [Fact]
+    public void Sem_fundo_nunca_e_proximo_de_um_fundo_escuro()
+    {
+        var terminal = new FakeTerminal();
+        var renderer = new TerminalRenderer(terminal, color: true, colorTolerance: 16);
+        var image = Image("ab");
+        image.Backgrounds[1] = 0x000000;
+
+        Draw(renderer, image);
+
+        terminal.Output.ShouldContain("a\e[48;2;0;0;0mb");
+    }
+
+    [Fact]
     public void Sem_cor_nao_envia_codigo_de_cor()
     {
         var terminal = new FakeTerminal();
