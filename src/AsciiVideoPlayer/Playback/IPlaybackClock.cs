@@ -6,6 +6,10 @@ public interface IPlaybackClock
 
     void Start();
 
+    void Pause();
+
+    void Resume();
+
     void WaitUntil(TimeSpan position)
     {
         var remaining = position - Elapsed;

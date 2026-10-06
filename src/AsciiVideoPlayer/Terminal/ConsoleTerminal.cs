@@ -9,6 +9,6 @@ public sealed class ConsoleTerminal : ITerminal
 
     public void Write(ReadOnlySpan<byte> bytes) => _output.Write(bytes);
 
-    public bool EscapePressed() =>
-        Console.KeyAvailable && Console.ReadKey(intercept: true).Key == ConsoleKey.Escape;
+    public ConsoleKey? ReadKey() =>
+        Console.KeyAvailable ? Console.ReadKey(intercept: true).Key : null;
 }

@@ -12,5 +12,6 @@ public sealed record PlayerOptions(
     int ColorSteps,
     bool NoAudio,
     bool NoColor,
+    TimeSpan Start,
     bool Loop,
     FileInfo? Export);

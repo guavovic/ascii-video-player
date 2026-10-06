@@ -72,6 +72,6 @@ public class FrameBenchmarks
         {
         }
 
-        public bool EscapePressed() => false;
+        public ConsoleKey? ReadKey() => null;
     }
 }

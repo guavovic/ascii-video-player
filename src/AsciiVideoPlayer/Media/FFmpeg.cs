@@ -13,7 +13,7 @@ public static class FFmpeg
     {
         using var process = Start("ffprobe",
             "-v", "error",
-            "-show_entries", "stream=codec_type,width,height,avg_frame_rate,r_frame_rate:stream_side_data=rotation:stream_tags=rotate",
+            "-show_entries", "format=duration:stream=codec_type,width,height,avg_frame_rate,r_frame_rate:stream_side_data=rotation:stream_tags=rotate",
             "-of", "json",
             path);
 
@@ -46,10 +46,11 @@ public static class FFmpeg
 
         double fps = ParseRate(v, "avg_frame_rate") ?? ParseRate(v, "r_frame_rate") ?? FallbackFps;
         bool rotated = Math.Abs(GetRotation(v)) % 180 == 90;
+        var duration = ParseDuration(json.RootElement);
 
         return rotated
-            ? new MediaInfo(height.GetInt32(), width.GetInt32(), fps, hasAudio)
-            : new MediaInfo(width.GetInt32(), height.GetInt32(), fps, hasAudio);
+            ? new MediaInfo(height.GetInt32(), width.GetInt32(), fps, hasAudio, duration)
+            : new MediaInfo(width.GetInt32(), height.GetInt32(), fps, hasAudio, duration);
     }
 
     public static Process Start(string program, params string[] arguments)
@@ -78,6 +79,9 @@ public static class FFmpeg
         }
     }
 
+    public static IEnumerable<string> StartAt(TimeSpan start) =>
+        start > TimeSpan.Zero ? ["-ss", Format(start.TotalSeconds)] : [];
+
     public static string Format(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 
     private static double? ParseRate(JsonElement stream, string property)
@@ -94,6 +98,17 @@ public static class FFmpeg
             return null;
 
         return numerator / denominator;
+    }
+
+    private static TimeSpan ParseDuration(JsonElement root)
+    {
+        if (root.TryGetProperty("format", out var format)
+            && format.TryGetProperty("duration", out var value)
+            && double.TryParse(value.GetString(), CultureInfo.InvariantCulture, out double seconds)
+            && seconds > 0)
+            return TimeSpan.FromSeconds(seconds);
+
+        return TimeSpan.Zero;
     }
 
     private static int GetRotation(JsonElement stream)

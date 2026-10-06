@@ -13,7 +13,7 @@ public sealed class FFmpegVideoSource : IVideoSource
     private readonly int _decodedWidth;
     private readonly int _decodedHeight;
 
-    public FFmpegVideoSource(string path, MediaInfo info)
+    public FFmpegVideoSource(string path, MediaInfo info, TimeSpan start = default)
     {
         Width = info.Width;
         Height = info.Height;
@@ -23,14 +23,15 @@ public sealed class FFmpegVideoSource : IVideoSource
         _decodedHeight = Even((int)Math.Round((double)_decodedWidth * info.Height / info.Width));
         _decoded = new byte[_decodedWidth * _decodedHeight * VideoFrame.BytesPerPixel];
 
-        _process = FFmpeg.Start("ffmpeg",
+        _process = FFmpeg.Start("ffmpeg", [
             "-nostdin", "-v", "error",
+            .. FFmpeg.StartAt(start),
             "-i", path,
             "-map", "0:v:0",
             "-vf", $"scale={_decodedWidth}:{_decodedHeight}:flags=area",
             "-r", FFmpeg.Format(info.Fps),
             "-f", "rawvideo", "-pix_fmt", "bgr24",
-            "pipe:1");
+            "pipe:1"]);
 
         _output = _process.StandardOutput.BaseStream;
     }

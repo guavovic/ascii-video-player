@@ -6,5 +6,6 @@ public interface ITerminal
     int Rows { get; }
 
     void Write(ReadOnlySpan<byte> bytes);
-    bool EscapePressed();
+
+    ConsoleKey? ReadKey();
 }

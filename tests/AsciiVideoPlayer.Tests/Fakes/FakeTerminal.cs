@@ -16,6 +16,9 @@ public sealed class FakeTerminal(int columns = 80, int rows = 24) : ITerminal
 
     public Action? OnWrite { get; init; }
 
+    // Tecla apertada depois de tantas escritas no terminal.
+    public Dictionary<int, ConsoleKey> KeysAfterWrites { get; init; } = [];
+
     public string Output => Encoding.UTF8.GetString(_output.ToArray());
 
     public byte[] OutputBytes => _output.ToArray();
@@ -27,7 +30,13 @@ public sealed class FakeTerminal(int columns = 80, int rows = 24) : ITerminal
         OnWrite?.Invoke();
     }
 
-    public bool EscapePressed() => Writes >= EscapeAfterWrites;
+    public ConsoleKey? ReadKey()
+    {
+        if (Writes >= EscapeAfterWrites)
+            return ConsoleKey.Escape;
+
+        return KeysAfterWrites.Remove(Writes, out var key) ? key : null;
+    }
 
     public void ClearOutput() => _output.SetLength(0);
 }
