@@ -14,5 +14,6 @@ public sealed record PlayerOptions(
     bool NoColor,
     TimeSpan Start,
     FileInfo? Subtitles,
+    bool Stats,
     bool Loop,
     FileInfo? Export);
