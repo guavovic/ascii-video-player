@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.RegularExpressions;
 using AsciiVideoPlayer.Ascii;
 using AsciiVideoPlayer.Export;
+using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Tests.Fakes;
 
 namespace AsciiVideoPlayer.Tests.Unit;
@@ -58,5 +59,25 @@ public sealed class HtmlExportTests
         using var raw = new MemoryStream();
         gzip.CopyTo(raw);
         raw.Length.ShouldBe(5 * 16 * 4 * HtmlExporter.BytesPerCell);
+        page.ShouldContain("const legendas = [];");
+    }
+
+    [Fact]
+    public void Leva_as_legendas_a_partir_do_ponto_de_inicio()
+    {
+        var subtitles = new SubtitleTrack([
+            new SubtitleCue(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), "Antes"),
+            new SubtitleCue(TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(12.5), "Diz \"oi\"\n</script>"),
+        ]);
+        var exporter = new HtmlExporter(new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters))), color: true);
+        var output = new StringWriter();
+
+        exporter.Export(new FakeVideoSource(frameCount: 2, fps: 10), fps: 10, columns: 16, title: "t", output,
+            subtitles: subtitles, start: TimeSpan.FromSeconds(10));
+
+        // O texto vai escapado: aspas, quebra de linha e "</script>" não podem fechar o script da página.
+        string escape = "\\u00";
+        output.ToString().ShouldContain(
+            $"const legendas = [[1,2.5,\"Diz {escape}22oi{escape}22\\n{escape}3C/script{escape}3E\"]];");
     }
 }

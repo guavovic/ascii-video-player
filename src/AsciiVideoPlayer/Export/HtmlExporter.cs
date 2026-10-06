@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Text;
+using System.Text.Json;
 using AsciiVideoPlayer.Ascii;
+using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Video;
 
@@ -10,7 +13,15 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
 {
     public const int BytesPerCell = 9;
 
-    public int Export(IVideoSource video, double fps, int columns, string title, TextWriter output, Action<int>? onFrame = null)
+    public int Export(
+        IVideoSource video,
+        double fps,
+        int columns,
+        string title,
+        TextWriter output,
+        Action<int>? onFrame = null,
+        SubtitleTrack? subtitles = null,
+        TimeSpan start = default)
     {
         double outputFps = Math.Min(fps, video.Fps);
         double step = video.Fps / outputFps;
@@ -47,7 +58,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
             }
         }
 
-        WritePage(output, title, outputFps, layout, color, frames, compressed.GetBuffer().AsSpan(0, (int)compressed.Length));
+        WritePage(output, title, outputFps, layout, frames, compressed.GetBuffer().AsSpan(0, (int)compressed.Length), Cues(subtitles, start));
         return frames;
     }
 
@@ -72,8 +83,28 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
         }
     }
 
+    // Cada legenda vira [início, fim, texto], em segundos a partir do começo do export.
+    private static string Cues(SubtitleTrack? subtitles, TimeSpan start)
+    {
+        var json = new StringBuilder("[");
+
+        foreach (var cue in subtitles?.Cues ?? [])
+        {
+            if (cue.End <= start)
+                continue;
+
+            if (json.Length > 1)
+                json.Append(',');
+
+            json.Append(CultureInfo.InvariantCulture,
+                $"[{(cue.Start - start).TotalSeconds:0.###},{(cue.End - start).TotalSeconds:0.###},\"{JsonEncodedText.Encode(cue.Text)}\"]");
+        }
+
+        return json.Append(']').ToString();
+    }
+
     private static void WritePage(
-        TextWriter output, string title, double fps, FrameLayout layout, bool color, int frames, ReadOnlySpan<byte> data)
+        TextWriter output, string title, double fps, FrameLayout layout, int frames, ReadOnlySpan<byte> data, string cues)
     {
         output.Write("""
             <!doctype html>
@@ -98,6 +129,7 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
             """);
         output.Write(string.Create(CultureInfo.InvariantCulture,
             $"const fps = {fps}, colunas = {layout.Columns}, linhas = {layout.Rows}, total = {frames}, celula = {BytesPerCell};\n"));
+        output.Write($"const legendas = {cues};\n");
         output.Write("const dados = \"");
         output.Write(Convert.ToBase64String(data));
         output.Write("""
@@ -153,7 +185,26 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
                   else contexto.fillText(String.fromCharCode(letra), x, y + altura / 2);
                 }
               }
+              legenda(atual / fps);
               atual = (atual + 1) % total;
+            }
+
+            function legenda(tempo) {
+              const ativa = legendas.find(([inicio, fim]) => tempo >= inicio && tempo < fim);
+              if (!ativa) return;
+              const partes = ativa[2].split("\n"), tamanho = Math.max(12, altura * 1.3), fonte = contexto.font;
+              contexto.font = `bold ${tamanho}px system-ui, sans-serif`;
+              contexto.textAlign = "center";
+              partes.forEach((texto, i) => {
+                const x = colunas * largura / 2, y = linhas * altura - (partes.length - i) * tamanho * 1.35;
+                const caixa = contexto.measureText(texto).width + tamanho;
+                contexto.fillStyle = "rgba(0, 0, 0, 0.75)";
+                contexto.fillRect(x - caixa / 2, y - tamanho * 0.65, caixa, tamanho * 1.3);
+                contexto.fillStyle = "#ffffff";
+                contexto.fillText(texto, x, y);
+              });
+              contexto.font = fonte;
+              contexto.textAlign = "start";
             }
 
             function alternar() {

@@ -6,6 +6,7 @@ using AsciiVideoPlayer.Audio;
 using AsciiVideoPlayer.Export;
 using AsciiVideoPlayer.Media;
 using AsciiVideoPlayer.Playback;
+using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Video;
 
@@ -87,6 +88,12 @@ public static class PlayerCommand
             },
         };
 
+        var subtitles = new Option<FileInfo>("--subtitles")
+        {
+            Description = "Legenda .srt desenhada por cima do vídeo. Padrão: um .srt com o mesmo nome do vídeo, se houver.",
+        };
+        subtitles.AcceptExistingOnly();
+
         var loop = new Option<bool>("--loop")
         {
             Description = "Recomeça o vídeo quando ele acaba, até apertar Esc ou Ctrl+C.",
@@ -104,7 +111,7 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, loop, export,
+            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, subtitles, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -118,6 +125,7 @@ public static class PlayerCommand
             result.GetValue(noAudio),
             result.GetValue(noColor),
             result.GetValue(start),
+            result.GetValue(subtitles),
             result.GetValue(loop),
             result.GetValue(export))));
 
@@ -156,8 +164,10 @@ public static class PlayerCommand
         var converter = new AsciiConverter(
             ImageStyles.Create(options.Style, new CharacterPalette(options.Palette), color), options.ColorSteps);
 
+        var subtitles = LoadSubtitles(options.Subtitles?.FullName ?? Path.ChangeExtension(path, ".srt"), options.Subtitles is not null);
+
         if (options.Export is not null)
-            return Export(options, path, info, converter, color);
+            return Export(options, path, info, converter, color, subtitles);
 
         Console.Title = Path.GetFileNameWithoutExtension(path);
         var renderer = new TerminalRenderer(new ConsoleTerminal(), color, options.ColorTolerance);
@@ -171,7 +181,7 @@ public static class PlayerCommand
 
             IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
             var player = new Player(
-                video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width, start, info.Duration, paused);
+                video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width, start, info.Duration, paused, subtitles);
 
             return player.Play(session.Cancellation);
         }, options.Start, options.Loop);
@@ -179,7 +189,24 @@ public static class PlayerCommand
         return 0;
     }
 
-    private static int Export(PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color)
+    private static SubtitleTrack? LoadSubtitles(string path, bool requested)
+    {
+        if (!requested && !File.Exists(path))
+            return null;
+
+        try
+        {
+            return SubtitleTrack.Load(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"Não foi possível ler a legenda, o vídeo toca sem ela: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static int Export(
+        PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color, SubtitleTrack? subtitles)
     {
         using var video = new FFmpegVideoSource(path, info, options.Start);
         using var output = new StreamWriter(options.Export!.FullName, append: false, new System.Text.UTF8Encoding(false));
@@ -190,7 +217,9 @@ public static class PlayerCommand
             options.Width ?? DefaultExportColumns,
             Path.GetFileNameWithoutExtension(path),
             output,
-            count => Console.Error.Write($"\rExportando: {count} quadros"));
+            count => Console.Error.Write($"\rExportando: {count} quadros"),
+            subtitles,
+            options.Start);
 
         Console.Error.WriteLine($"\rPronto: {frames} quadros em {options.Export.FullName}");
         return 0;

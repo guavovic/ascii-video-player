@@ -1,4 +1,5 @@
 using AsciiVideoPlayer.Ascii;
+using AsciiVideoPlayer.Subtitles;
 using AsciiVideoPlayer.Terminal;
 using AsciiVideoPlayer.Video;
 
@@ -13,7 +14,8 @@ public sealed class Player(
     int? maxWidth,
     TimeSpan start = default,
     TimeSpan duration = default,
-    bool startPaused = false)
+    bool startPaused = false,
+    SubtitleTrack? subtitles = null)
 {
     public static readonly TimeSpan ShortSeek = TimeSpan.FromSeconds(5);
     public static readonly TimeSpan LongSeek = TimeSpan.FromMinutes(1);
@@ -88,7 +90,7 @@ public sealed class Player(
 
             nextFrameIndex++;
             converter.Convert(_frame, _image);
-            renderer.Draw(_image, _layout, now < _statusUntil ? Status(paused: false) : default);
+            renderer.Draw(_image, _layout, OverlayAt(paused: false, showStatus: now < _statusUntil));
 
             nextDisplay += displayInterval;
 
@@ -102,7 +104,7 @@ public sealed class Player(
     private PlaybackEnd? Pause(CancellationToken cancellationToken)
     {
         clock.Pause();
-        renderer.Draw(_image, _layout, Status(paused: true));
+        renderer.Draw(_image, _layout, OverlayAt(paused: true, showStatus: true));
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -146,6 +148,7 @@ public sealed class Player(
         return PlaybackEnd.SeekTo(target, paused);
     }
 
-    private Overlay Status(bool paused) =>
-        new(Status: ProgressBar.Format(Position, duration, paused, renderer.Columns));
+    private Overlay OverlayAt(bool paused, bool showStatus) => new(
+        subtitles?.At(Position),
+        showStatus ? ProgressBar.Format(Position, duration, paused, renderer.Columns) : null);
 }
