@@ -9,6 +9,7 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
     private readonly ArrayBufferWriter<byte> _buffer = new();
     private (int Columns, int Rows) _terminalSize;
     private bool _clearPending;
+    private int _terminalBackground = AsciiImage.NoColor;
 
     public FrameLayout Fit(int videoWidth, int videoHeight, int? maxWidth)
     {
@@ -31,9 +32,11 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
         {
             Append("\e[0m\e[2J"u8);
             _clearPending = false;
+            _terminalBackground = AsciiImage.NoColor;
         }
 
         int currentColor = -1;
+        int currentBackground = _terminalBackground;
 
         for (int row = 0; row < image.Height; row++)
         {
@@ -46,13 +49,24 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
                 if (color && image.Colors[index] != currentColor)
                 {
                     currentColor = image.Colors[index];
-                    SetColor(currentColor);
+                    SetColor("\e[38;2;"u8, currentColor);
+                }
+
+                if (color && image.Backgrounds[index] != currentBackground)
+                {
+                    currentBackground = image.Backgrounds[index];
+
+                    if (currentBackground == AsciiImage.NoColor)
+                        Append("\e[49m"u8);
+                    else
+                        SetColor("\e[48;2;"u8, currentBackground);
                 }
 
                 AppendCharacter(image.Characters[index]);
             }
         }
 
+        _terminalBackground = currentBackground;
         terminal.Write(_buffer.WrittenSpan);
     }
 
@@ -67,9 +81,9 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
         Append("H"u8);
     }
 
-    private void SetColor(int rgb)
+    private void SetColor(ReadOnlySpan<byte> prefix, int rgb)
     {
-        Append("\e[38;2;"u8);
+        Append(prefix);
         AppendNumber(rgb >> 16 & 0xFF);
         Append(";"u8);
         AppendNumber(rgb >> 8 & 0xFF);
