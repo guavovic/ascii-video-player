@@ -47,6 +47,21 @@ public static class PlayerCommand
             DefaultValueFactory = _ => ImageStyle.Ascii,
         };
 
+        var colorTolerance = new Option<int>("--color-tolerance")
+        {
+            Description = "Reaproveita a cor anterior quando a nova difere menos que isso (soma das diferenças de R, G e B), " +
+                "para mandar menos bytes ao terminal. 0 só reaproveita a cor idêntica.",
+            DefaultValueFactory = _ => TerminalRenderer.DefaultColorTolerance,
+        };
+        colorTolerance.Validators.Add(result =>
+        {
+            if (result.GetValue(colorTolerance) < 0)
+                result.AddError("--color-tolerance precisa ser 0 ou mais.");
+        });
+
+        var colorSteps = PositiveNumberOption<int>(
+            "--color-steps", "-c", "Arredonda cada canal de cor para múltiplos desse passo, com menos cores no total. Padrão: 1 (todas as cores).");
+
         var noAudio = new Option<bool>("--no-audio")
         {
             Description = "Toca só o vídeo, sem o áudio.",
@@ -74,7 +89,7 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, style, noAudio, noColor, loop, export,
+            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -83,6 +98,8 @@ public static class PlayerCommand
             result.GetValue(fps),
             result.GetValue(palette)!,
             result.GetValue(style),
+            result.GetValue(colorTolerance),
+            result.GetValue(colorSteps) ?? 1,
             result.GetValue(noAudio),
             result.GetValue(noColor),
             result.GetValue(loop),
@@ -120,13 +137,14 @@ public static class PlayerCommand
         }
 
         bool color = !options.NoColor && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR"));
-        var converter = new AsciiConverter(ImageStyles.Create(options.Style, new CharacterPalette(options.Palette), color));
+        var converter = new AsciiConverter(
+            ImageStyles.Create(options.Style, new CharacterPalette(options.Palette), color), options.ColorSteps);
 
         if (options.Export is not null)
             return Export(options, path, info, converter, color);
 
         Console.Title = Path.GetFileNameWithoutExtension(path);
-        var renderer = new TerminalRenderer(new ConsoleTerminal(), color);
+        var renderer = new TerminalRenderer(new ConsoleTerminal(), color, options.ColorTolerance);
 
         using var session = new TerminalSession();
 

@@ -4,8 +4,11 @@ using AsciiVideoPlayer.Ascii;
 
 namespace AsciiVideoPlayer.Terminal;
 
-public sealed class TerminalRenderer(ITerminal terminal, bool color)
+public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTolerance = 0)
 {
+    // Medido no ADR 0013: corta cerca de 40% dos bytes por quadro sem diferença visível.
+    public const int DefaultColorTolerance = 16;
+
     private readonly ArrayBufferWriter<byte> _buffer = new();
     private (int Columns, int Rows) _terminalSize;
     private bool _clearPending;
@@ -46,13 +49,14 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
             {
                 int index = row * image.Width + column;
 
-                if (color && image.Colors[index] != currentColor)
+                // A cor da letra não aparece no espaço, então não precisa ser enviada.
+                if (color && image.Characters[index] != ' ' && !IsClose(image.Colors[index], currentColor))
                 {
                     currentColor = image.Colors[index];
                     SetColor("\e[38;2;"u8, currentColor);
                 }
 
-                if (color && image.Backgrounds[index] != currentBackground)
+                if (color && !IsClose(image.Backgrounds[index], currentBackground))
                 {
                     currentBackground = image.Backgrounds[index];
 
@@ -71,6 +75,22 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color)
     }
 
     public bool EscapePressed() => terminal.EscapePressed();
+
+    // Soma das diferenças de R, G e B. "Sem cor" só é próximo de "sem cor".
+    private bool IsClose(int color, int current)
+    {
+        if (color == current)
+            return true;
+
+        if (color < 0 || current < 0)
+            return false;
+
+        int distance = Math.Abs((color >> 16) - (current >> 16))
+            + Math.Abs((color >> 8 & 0xFF) - (current >> 8 & 0xFF))
+            + Math.Abs((color & 0xFF) - (current & 0xFF));
+
+        return distance <= colorTolerance;
+    }
 
     private void MoveCursor(int row, int column)
     {

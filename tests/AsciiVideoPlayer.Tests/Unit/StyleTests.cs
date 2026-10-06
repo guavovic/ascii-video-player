@@ -109,6 +109,16 @@ public sealed class StyleTests
         new string(image.Characters, 5, 5).ShouldBe("  ||#");
     }
 
+    [Theory]
+    [InlineData(1, 0x123456, 0x123456)]
+    [InlineData(16, 0x123456, 0x103050)]
+    [InlineData(16, 0xF8F9FF, 0xFFFFFF)]
+    [InlineData(16, AsciiImage.NoColor, AsciiImage.NoColor)]
+    public void Passos_arredondam_cada_canal_para_o_multiplo_mais_proximo(int steps, int rgb, int expected)
+    {
+        new AsciiConverter(new AsciiStyle(new CharacterPalette(" #")), steps).Quantize(rgb).ShouldBe(expected);
+    }
+
     private static VideoFrame Frame(int width, int height, params int[] rgb)
     {
         var frame = new VideoFrame(width, height);
