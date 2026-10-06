@@ -1,3 +1,4 @@
 namespace AsciiVideoPlayer.Media;
 
-public sealed record MediaInfo(int Width, int Height, double Fps, bool HasAudio);
+// Duration fica zero quando o arquivo não informa (por exemplo, uma transmissão ao vivo).
+public sealed record MediaInfo(int Width, int Height, double Fps, bool HasAudio, TimeSpan Duration = default);

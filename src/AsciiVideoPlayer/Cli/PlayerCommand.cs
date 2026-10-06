@@ -72,6 +72,21 @@ public static class PlayerCommand
             Description = "Desenha sem cores. A variável de ambiente NO_COLOR tem o mesmo efeito.",
         };
 
+        var start = new Option<TimeSpan>("--start")
+        {
+            Description = "Começa a partir desse ponto, em segundos (90) ou com dois-pontos (1:30, 1:02:03).",
+            CustomParser = result =>
+            {
+                string token = result.Tokens[0].Value;
+
+                if (TimeFormat.TryParse(token, out var time))
+                    return time;
+
+                result.AddError($"--start precisa ser um tempo como 90, 1:30 ou 1:02:03 (recebido: '{token}').");
+                return TimeSpan.Zero;
+            },
+        };
+
         var loop = new Option<bool>("--loop")
         {
             Description = "Recomeça o vídeo quando ele acaba, até apertar Esc ou Ctrl+C.",
@@ -89,7 +104,7 @@ public static class PlayerCommand
 
         var command = new RootCommand("Toca um vídeo no terminal em caracteres ASCII.")
         {
-            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, loop, export,
+            video, width, fps, palette, style, colorTolerance, colorSteps, noAudio, noColor, start, loop, export,
         };
 
         command.SetAction(result => Run(new PlayerOptions(
@@ -102,6 +117,7 @@ public static class PlayerCommand
             result.GetValue(colorSteps) ?? 1,
             result.GetValue(noAudio),
             result.GetValue(noColor),
+            result.GetValue(start),
             result.GetValue(loop),
             result.GetValue(export))));
 
@@ -148,23 +164,24 @@ public static class PlayerCommand
 
         using var session = new TerminalSession();
 
-        PlaybackLoop.Run(() =>
+        PlaybackLoop.Run((start, paused) =>
         {
-            using var video = new FFmpegVideoSource(path, info);
-            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path) : null;
+            using var video = new FFmpegVideoSource(path, info, start);
+            using var audio = !options.NoAudio && info.HasAudio ? OpenAlAudioPlayer.TryOpen(path, start) : null;
 
             IPlaybackClock clock = audio is null ? new StopwatchClock() : audio;
-            var player = new Player(video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width);
+            var player = new Player(
+                video, converter, renderer, clock, options.Fps ?? video.Fps, options.Width, start, info.Duration, paused);
 
             return player.Play(session.Cancellation);
-        }, options.Loop);
+        }, options.Start, options.Loop);
 
         return 0;
     }
 
     private static int Export(PlayerOptions options, string path, MediaInfo info, AsciiConverter converter, bool color)
     {
-        using var video = new FFmpegVideoSource(path, info);
+        using var video = new FFmpegVideoSource(path, info, options.Start);
         using var output = new StreamWriter(options.Export!.FullName, append: false, new System.Text.UTF8Encoding(false));
 
         int frames = new HtmlExporter(converter, color).Export(

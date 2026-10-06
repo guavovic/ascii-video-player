@@ -13,6 +13,7 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
     private (int Columns, int Rows) _terminalSize;
     private bool _clearPending;
     private int _terminalBackground = AsciiImage.NoColor;
+    private int _overlayTop = -1;
 
     public FrameLayout Fit(int videoWidth, int videoHeight, int? maxWidth)
     {
@@ -27,7 +28,9 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
         return FrameLayout.Fit(videoWidth, videoHeight, size.Columns, size.Rows, maxWidth);
     }
 
-    public void Draw(AsciiImage image, FrameLayout layout)
+    public int Columns => terminal.Columns;
+
+    public void Draw(AsciiImage image, FrameLayout layout, Overlay overlay = default)
     {
         _buffer.ResetWrittenCount();
 
@@ -36,7 +39,10 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
             Append("\e[0m\e[2J"u8);
             _clearPending = false;
             _terminalBackground = AsciiImage.NoColor;
+            _overlayTop = -1;
         }
+
+        ClearOverlay();
 
         int currentColor = -1;
         int currentBackground = _terminalBackground;
@@ -71,10 +77,78 @@ public sealed class TerminalRenderer(ITerminal terminal, bool color, int colorTo
         }
 
         _terminalBackground = currentBackground;
+        DrawOverlay(overlay);
         terminal.Write(_buffer.WrittenSpan);
     }
 
-    public bool EscapePressed() => terminal.EscapePressed();
+    public ConsoleKey? ReadKey() => terminal.ReadKey();
+
+    // A imagem nem sempre cobre as linhas de baixo, então o texto do quadro anterior é apagado antes.
+    private void ClearOverlay()
+    {
+        if (_overlayTop < 0)
+            return;
+
+        Append("\e[0m"u8);
+        _terminalBackground = AsciiImage.NoColor;
+
+        for (int row = _overlayTop; row < terminal.Rows; row++)
+        {
+            MoveCursor(row, 0);
+            Append("\e[2K"u8);
+        }
+
+        _overlayTop = -1;
+    }
+
+    private void DrawOverlay(Overlay overlay)
+    {
+        if (overlay.IsEmpty)
+            return;
+
+        int columns = terminal.Columns;
+        int bottom = terminal.Rows - 1;
+        _overlayTop = bottom;
+        Append("\e[0m"u8);
+
+        if (overlay.Status is { } status)
+        {
+            MoveCursor(bottom, 0);
+            Append(color ? "\e[48;2;24;24;24m\e[38;2;230;230;230m"u8 : "\e[7m"u8);
+            AppendText(status.Length > columns ? status[..columns] : status.PadRight(columns));
+            Append("\e[0m"u8);
+        }
+
+        if (overlay.Subtitle is { } subtitle)
+        {
+            string[] lines = subtitle.Split('\n');
+            int first = bottom - lines.Length;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                int row = first + i;
+                string line = $" {lines[i].Trim()} ";
+
+                if (row < 0 || line.Length == 2)
+                    continue;
+
+                if (line.Length > columns)
+                    line = line[..columns];
+
+                MoveCursor(row, (columns - line.Length) / 2);
+                Append(color ? "\e[1;48;2;0;0;0m\e[38;2;255;255;255m"u8 : "\e[1m"u8);
+                AppendText(line);
+                Append("\e[0m"u8);
+            }
+
+            _overlayTop = Math.Max(0, first);
+        }
+
+        _terminalBackground = AsciiImage.NoColor;
+    }
+
+    private void AppendText(string text) =>
+        _buffer.Advance(Encoding.UTF8.GetBytes(text, _buffer.GetSpan(Encoding.UTF8.GetMaxByteCount(text.Length))));
 
     // Soma das diferenças de R, G e B. "Sem cor" só é próximo de "sem cor".
     private bool IsClose(int color, int current)

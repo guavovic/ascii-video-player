@@ -125,6 +125,38 @@ public sealed class TerminalRendererTests
     }
 
     [Fact]
+    public void Desenha_o_status_na_ultima_linha_e_a_legenda_centralizada_acima()
+    {
+        var terminal = new FakeTerminal(columns: 20, rows: 5);
+        var renderer = new TerminalRenderer(terminal, color: false);
+
+        renderer.Draw(Image("ab"), new FrameLayout(2, 1, 0, 0), new Overlay(Subtitle: "Oi\nTudo bem?", Status: "0:01"));
+
+        terminal.Output.ShouldContain("\e[3;9H\e[1m Oi \e[0m");
+        terminal.Output.ShouldContain("\e[4;5H\e[1m Tudo bem? \e[0m");
+        terminal.Output.ShouldContain("\e[5;1H\e[7m0:01                \e[0m");
+    }
+
+    [Fact]
+    public void Apaga_as_linhas_do_texto_no_quadro_seguinte()
+    {
+        var terminal = new FakeTerminal(columns: 20, rows: 5);
+        var renderer = new TerminalRenderer(terminal, color: false);
+        renderer.Draw(Image("ab"), new FrameLayout(2, 1, 0, 0), new Overlay(Status: "0:01"));
+
+        terminal.ClearOutput();
+        renderer.Draw(Image("ab"), new FrameLayout(2, 1, 0, 0));
+
+        terminal.Output.ShouldStartWith("\e[0m\e[5;1H\e[2K");
+        terminal.Output.ShouldNotContain("0:01");
+
+        terminal.ClearOutput();
+        renderer.Draw(Image("ab"), new FrameLayout(2, 1, 0, 0));
+
+        terminal.Output.ShouldNotContain("\e[2K");
+    }
+
+    [Fact]
     public void Sem_cor_nao_envia_codigo_de_cor()
     {
         var terminal = new FakeTerminal();

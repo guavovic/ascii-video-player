@@ -103,12 +103,85 @@ public sealed class PlayerTests
             .ShouldBe(PlaybackEnd.Stopped);
     }
 
-    private PlaybackEnd Play(FakeVideoSource video, FakeTerminal terminal, double fps, CancellationToken? cancellationToken = null)
+    [Theory]
+    [InlineData(ConsoleKey.RightArrow, 16.9)]
+    [InlineData(ConsoleKey.LeftArrow, 6.9)]
+    [InlineData(ConsoleKey.UpArrow, 71.9)]
+    [InlineData(ConsoleKey.DownArrow, 0)]
+    public void Setas_pulam_a_partir_da_posicao_atual(ConsoleKey key, double expectedSeconds)
+    {
+        var terminal = new FakeTerminal { KeysAfterWrites = { [20] = key } };
+
+        var end = Play(new FakeVideoSource(frameCount: 1000, fps: 10), terminal, fps: 10,
+            start: TimeSpan.FromSeconds(10), duration: TimeSpan.FromMinutes(2));
+
+        end.ShouldBe(PlaybackEnd.SeekTo(TimeSpan.FromSeconds(expectedSeconds)));
+    }
+
+    [Fact]
+    public void Pular_alem_do_fim_termina_o_video()
+    {
+        var terminal = new FakeTerminal { KeysAfterWrites = { [1] = ConsoleKey.RightArrow } };
+
+        Play(new FakeVideoSource(frameCount: 100, fps: 10), terminal, fps: 10,
+                start: TimeSpan.FromSeconds(8), duration: TimeSpan.FromSeconds(10))
+            .ShouldBe(PlaybackEnd.Finished);
+    }
+
+    [Fact]
+    public void Espaco_pausa_o_relogio_mostra_a_barra_e_espaco_de_novo_continua()
+    {
+        var video = new FakeVideoSource(frameCount: 5, fps: 10);
+        bool pausedWhileDrawing = false;
+        var terminal = new FakeTerminal(columns: 60)
+        {
+            KeysAfterWrites = { [2] = ConsoleKey.Spacebar, [3] = ConsoleKey.Spacebar },
+            OnWrite = () => pausedWhileDrawing |= _clock.Paused,
+        };
+
+        var end = Play(video, terminal, fps: 10, duration: TimeSpan.FromSeconds(1));
+
+        end.ShouldBe(PlaybackEnd.Finished);
+        pausedWhileDrawing.ShouldBeTrue();
+        _clock.Paused.ShouldBeFalse();
+        terminal.Output.ShouldContain("pausado");
+        video.ReadFrames.ShouldBe([0, 1, 2, 3, 4]);
+    }
+
+    [Fact]
+    public void Pular_durante_a_pausa_continua_pausado()
+    {
+        var terminal = new FakeTerminal { KeysAfterWrites = { [1] = ConsoleKey.Spacebar, [2] = ConsoleKey.RightArrow } };
+
+        Play(new FakeVideoSource(frameCount: 100, fps: 10), terminal, fps: 10)
+            .ShouldBe(PlaybackEnd.SeekTo(TimeSpan.FromSeconds(5), paused: true));
+    }
+
+    [Fact]
+    public void Comecando_pausado_desenha_o_primeiro_quadro_e_espera()
+    {
+        var video = new FakeVideoSource(frameCount: 100, fps: 10);
+        var terminal = new FakeTerminal { KeysAfterWrites = { [2] = ConsoleKey.Escape } };
+
+        Play(video, terminal, fps: 10, startPaused: true).ShouldBe(PlaybackEnd.Stopped);
+
+        video.ReadFrames.ShouldBe([0]);
+        terminal.Output.ShouldContain("pausado");
+    }
+
+    private PlaybackEnd Play(
+        FakeVideoSource video,
+        FakeTerminal terminal,
+        double fps,
+        CancellationToken? cancellationToken = null,
+        TimeSpan start = default,
+        TimeSpan duration = default,
+        bool startPaused = false)
     {
         var converter = new AsciiConverter(new AsciiStyle(new CharacterPalette(CharacterPalette.DefaultCharacters)));
         var renderer = new TerminalRenderer(terminal, color: false);
 
-        return new Player(video, converter, renderer, _clock, fps, maxWidth: null)
+        return new Player(video, converter, renderer, _clock, fps, maxWidth: null, start, duration, startPaused)
             .Play(cancellationToken ?? TestContext.Current.CancellationToken);
     }
 }

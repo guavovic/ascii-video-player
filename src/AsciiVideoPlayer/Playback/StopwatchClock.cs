@@ -9,4 +9,8 @@ public sealed class StopwatchClock : IPlaybackClock
     public TimeSpan Elapsed => _stopwatch.Elapsed;
 
     public void Start() => _stopwatch.Start();
+
+    public void Pause() => _stopwatch.Stop();
+
+    public void Resume() => _stopwatch.Start();
 }

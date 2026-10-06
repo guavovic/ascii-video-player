@@ -25,10 +25,11 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
     private readonly Stopwatch _sinceEnded = new();
     private Thread? _feeder;
     private volatile bool _stopping;
+    private bool _ended;
     private long _playedBytes;
     private TimeSpan _endPosition;
 
-    private OpenAlAudioPlayer(string path)
+    private OpenAlAudioPlayer(string path, TimeSpan start)
     {
         _device = _alc.OpenDevice("");
 
@@ -41,12 +42,13 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
         _source = _al.GenSource();
         _buffers = _al.GenBuffers(ChunkCount);
 
-        _decoder = FFmpeg.Start("ffmpeg",
+        _decoder = FFmpeg.Start("ffmpeg", [
             "-nostdin", "-v", "error",
+            .. FFmpeg.StartAt(start),
             "-i", path,
             "-map", "0:a:0",
             "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", SampleRate.ToString(),
-            "pipe:1");
+            "pipe:1"]);
 
         _pcm = _decoder.StandardOutput.BaseStream;
     }
@@ -57,7 +59,7 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
         {
             lock (_lock)
             {
-                if (_sinceEnded.IsRunning)
+                if (_ended)
                     return _endPosition + _sinceEnded.Elapsed;
 
                 return PlayedPosition();
@@ -65,11 +67,11 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
         }
     }
 
-    public static OpenAlAudioPlayer? TryOpen(string path)
+    public static OpenAlAudioPlayer? TryOpen(string path, TimeSpan start = default)
     {
         try
         {
-            return new OpenAlAudioPlayer(path);
+            return new OpenAlAudioPlayer(path, start);
         }
         catch (Exception ex)
         {
@@ -95,6 +97,28 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
 
         _feeder = new Thread(Feed) { IsBackground = true, Name = "audio" };
         _feeder.Start();
+    }
+
+    public void Pause()
+    {
+        lock (_lock)
+        {
+            _sinceEnded.Stop();
+
+            if (!_ended)
+                _al.SourcePause(_source);
+        }
+    }
+
+    public void Resume()
+    {
+        lock (_lock)
+        {
+            if (_ended)
+                _sinceEnded.Start();
+            else
+                _al.SourcePlay(_source);
+        }
     }
 
     public void Dispose()
@@ -135,6 +159,7 @@ public sealed unsafe class OpenAlAudioPlayer : IAudioPlayer
                 if (queued == 0)
                 {
                     _endPosition = PlayedPosition();
+                    _ended = true;
                     _sinceEnded.Start();
                     return;
                 }

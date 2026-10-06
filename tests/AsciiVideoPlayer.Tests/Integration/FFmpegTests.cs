@@ -19,11 +19,11 @@ public sealed class FFmpegTests : IDisposable
     }
 
     [Fact]
-    public void Probe_le_o_tamanho_o_fps_e_se_tem_audio()
+    public void Probe_le_o_tamanho_o_fps_a_duracao_e_se_tem_audio()
     {
         string path = _videos.Create("com-audio.mp4", "-f", "lavfi", "-i", RedVideo, "-f", "lavfi", "-i", Tone, "-shortest");
 
-        FFmpeg.Probe(path).ShouldBe(new MediaInfo(Width: 64, Height: 36, Fps: 10, HasAudio: true));
+        FFmpeg.Probe(path).ShouldBe(new MediaInfo(Width: 64, Height: 36, Fps: 10, HasAudio: true, Duration: TimeSpan.FromSeconds(2)));
     }
 
     [Fact]
@@ -66,6 +66,20 @@ public sealed class FFmpegTests : IDisposable
             frames++;
 
         frames.ShouldBe(20);
+    }
+
+    [Fact]
+    public void Fonte_de_video_comeca_na_posicao_pedida()
+    {
+        string path = _videos.Create("comecar-adiante.mp4", "-f", "lavfi", "-i", RedVideo);
+        using var source = new FFmpegVideoSource(path, FFmpeg.Probe(path)!, start: TimeSpan.FromSeconds(1.5));
+        var frame = new VideoFrame(8, 4);
+
+        int frames = 0;
+        while (source.TryReadFrame(frame))
+            frames++;
+
+        frames.ShouldBe(5);
     }
 
     [Fact]
