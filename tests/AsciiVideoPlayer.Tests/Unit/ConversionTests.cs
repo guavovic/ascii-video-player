@@ -33,6 +33,15 @@ public sealed class ConversionTests
         image.Colors.ShouldBe([0x000000, 0x00FFC8]);
     }
 
+    [Theory]
+    [InlineData(40, 20, 10, 0xFF7F3F)]
+    [InlineData(10, 10, 10, 0xFFFFFF)]
+    [InlineData(0, 0, 0, 0x000000)]
+    public void Cor_vai_ao_brilho_maximo_mantendo_o_tom(int red, int green, int blue, int expected)
+    {
+        AsciiConverter.AtFullBrightness(red, green, blue).ShouldBe(expected);
+    }
+
     [Fact]
     public void Reducao_tira_a_media_dos_pixels_cobertos()
     {
