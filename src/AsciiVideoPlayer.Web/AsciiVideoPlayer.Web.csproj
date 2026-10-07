@@ -12,7 +12,7 @@
   <!-- O mesmo núcleo do player de terminal: os arquivos são compartilhados, não copiados. -->
   <ItemGroup>
     <Compile Include="..\AsciiVideoPlayer\Ascii\*.cs" LinkBase="Nucleo\Ascii" />
-    <Compile Include="..\AsciiVideoPlayer\Video\VideoFrame.cs;..\AsciiVideoPlayer\Video\AreaResampler.cs" LinkBase="Nucleo\Video" />
+    <Compile Include="..\AsciiVideoPlayer\Video\VideoFrame.cs" LinkBase="Nucleo\Video" />
     <Compile Include="..\AsciiVideoPlayer\Terminal\FrameLayout.cs" LinkBase="Nucleo\Terminal" />
     <Compile Include="..\AsciiVideoPlayer\Subtitles\SubtitleTrack.cs" LinkBase="Nucleo\Subtitles" />
     <Content Include="..\AsciiVideoPlayer\Export\desenho.js" Link="wwwroot\desenho.js" />

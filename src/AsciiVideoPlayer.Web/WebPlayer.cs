@@ -59,32 +59,6 @@ public static partial class WebPlayer
         return _cells;
     }
 
-    // Converte uma imagem pequena (um ícone, uma barra) com o estilo pedido, numa grade fixa de colunas × linhas,
-    // sem mexer na conversão do vídeo. Devolve as células.
-    [JSExport]
-    public static byte[] ConvertImage(string style, bool color, byte[] rgba, int width, int height, int columns, int rows)
-    {
-        var imageStyle = Enum.TryParse<ImageStyle>(style, ignoreCase: true, out var parsed) ? parsed : ImageStyle.Ascii;
-        var converter = new AsciiConverter(ImageStyles.Create(imageStyle, new CharacterPalette(CharacterPalette.DefaultCharacters), color));
-        byte[] bgr = new byte[width * height * VideoFrame.BytesPerPixel];
-
-        for (int source = 0, target = 0; target < bgr.Length; source += 4, target += VideoFrame.BytesPerPixel)
-        {
-            bgr[target] = rgba[source + 2];
-            bgr[target + 1] = rgba[source + 1];
-            bgr[target + 2] = rgba[source];
-        }
-
-        var frame = converter.CreateFrame(columns, rows);
-        var image = new AsciiImage(columns, rows);
-        byte[] cells = new byte[columns * rows * CellEncoding.BytesPerCell];
-
-        AreaResampler.Resize(bgr, width, height, frame);
-        converter.Convert(frame, image);
-        CellEncoding.Encode(image, color, cells);
-        return cells;
-    }
-
     [JSExport]
     public static int LoadSubtitles(string text)
     {

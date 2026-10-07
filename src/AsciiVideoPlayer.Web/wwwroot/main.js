@@ -23,57 +23,15 @@ function formatar(segundos) {
   return horas > 0 ? `${horas}:${String(minutos).padStart(2, "0")}:${resto}` : `${minutos}:${resto}`;
 }
 
-// Os ícones e as barras passam pelo mesmo conversor do vídeo, no estilo escolhido.
-const imagensDosIcones = new Map();
-
-function imagemDoIcone(nome) {
-  if (!imagensDosIcones.has(nome)) {
-    // Traço mais grosso que o da barra de título: reduzido a poucas letras, o traço fino quase some.
-    const forma = $(`i-${nome}`).innerHTML.replaceAll('stroke-width="2"', 'stroke-width="3.4"');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96"><g color="#fff" style="color:#fff">${forma}</g></svg>`;
-    const imagem = new Image();
-    imagem.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-    imagensDosIcones.set(nome, imagem.decode().then(() => imagem));
+// Ícones desenhados (os símbolos do index.html), em cinza do CMD.
+function desenharIcone(elemento) {
+  let svg = elemento.querySelector("svg");
+  if (!svg) {
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.append(document.createElementNS("http://www.w3.org/2000/svg", "use"));
+    elemento.prepend(svg);
   }
-  return imagensDosIcones.get(nome);
-}
-
-function pixels(largura, altura, pintar) {
-  const canvas = document.createElement("canvas");
-  canvas.width = largura;
-  canvas.height = altura;
-  const contexto = canvas.getContext("2d", { willReadFrequently: true });
-  contexto.fillStyle = "#000";
-  contexto.fillRect(0, 0, largura, altura);
-  pintar(contexto);
-  return new Uint8Array(contexto.getImageData(0, 0, largura, altura).data.buffer);
-}
-
-async function desenharIcone(elemento) {
-  const nome = elemento.dataset.icone;
-  const imagem = await imagemDoIcone(nome);
-  const colorido = nome === "cor" && comCor;
-  const forma = document.createElement("canvas");
-  forma.width = forma.height = 96;
-  const contextoDaForma = forma.getContext("2d");
-  contextoDaForma.drawImage(imagem, 0, 0, 96, 96);
-  if (colorido) {
-    const arco = contextoDaForma.createLinearGradient(0, 0, 96, 96);
-    ["#ff5f5f", "#ffd75f", "#5fff87", "#5fd7ff", "#d75fff"].forEach((cor, i, cores) => arco.addColorStop(i / (cores.length - 1), cor));
-    contextoDaForma.globalCompositeOperation = "source-atop";
-    contextoDaForma.fillStyle = arco;
-    contextoDaForma.fillRect(0, 0, 96, 96);
-  }
-  const rgba = pixels(96, 96, contexto => contexto.drawImage(forma, 0, 0));
-  // Realça os meios-tons, para a borda do traço virar letra densa e não ponto.
-  for (let i = 0; i < rgba.length; i++) rgba[i] = Math.round(Math.sqrt(rgba[i] / 255) * 255);
-  const grande = elemento.classList.contains("grande");
-  const [colunas, linhas, tamanho] = grande ? [14, 7, 60] : [12, 6, 48];
-  const estiloDoIcone = elemento.dataset.estilo ?? estilo;
-  const celulas = nucleo.ConvertImage(estiloDoIcone, colorido, rgba, 96, 96, colunas, linhas);
-  let canvas = elemento.querySelector("canvas");
-  if (!canvas) elemento.prepend(canvas = document.createElement("canvas"));
-  desenharPequeno(canvas, celulas, colunas, linhas, tamanho, tamanho);
+  svg.firstChild.setAttribute("href", `#i-${elemento.dataset.icone}`);
 }
 
 function desenharIcones() {
@@ -86,7 +44,7 @@ function trocarIcone(elemento, nome) {
   desenharIcone(elemento);
 }
 
-// Barra deslizante desenhada em caracteres: trilho fino, parte cheia mais grossa e o botão redondo.
+// Barra deslizante fina, no cinza do CMD, com mouse, toque e setas do teclado.
 function criarBarra(elemento, { min, max, valor, passo = 1, aoMudar }) {
   const canvas = document.createElement("canvas");
   elemento.append(canvas);
@@ -107,21 +65,21 @@ function criarBarra(elemento, { min, max, valor, passo = 1, aoMudar }) {
     desenhar() {
       const largura = elemento.clientWidth, altura = 14;
       if (!largura) return;
-      const colunas = Math.max(4, Math.floor(largura / 6));
-      const imagemLargura = colunas * 8, imagemAltura = 24;
-      const fracao = (barra.valor - min) / (max - min || 1);
-      const x = 6 + fracao * (imagemLargura - 12);
-      const rgba = pixels(imagemLargura, imagemAltura, contexto => {
-        contexto.fillStyle = "#555";
-        contexto.fillRect(0, 10, imagemLargura, 4);
-        contexto.fillStyle = "#fff";
-        contexto.fillRect(0, 8, x, 8);
-        contexto.beginPath();
-        contexto.arc(x, 12, 10, 0, 2 * Math.PI);
-        contexto.fill();
-      });
-      const celulas = nucleo.ConvertImage(estilo, false, rgba, imagemLargura, imagemAltura, colunas, 1);
-      desenharPequeno(canvas, celulas, colunas, 1, colunas * 6, altura);
+      const escala = devicePixelRatio || 1;
+      canvas.width = Math.round(largura * escala);
+      canvas.height = Math.round(altura * escala);
+      canvas.style.width = largura + "px";
+      canvas.style.height = altura + "px";
+      const contexto = canvas.getContext("2d");
+      contexto.setTransform(escala, 0, 0, escala, 0, 0);
+      const x = 5 + (barra.valor - min) / (max - min || 1) * (largura - 10);
+      contexto.fillStyle = "#3a3a3a";
+      contexto.fillRect(0, 6, largura, 2);
+      contexto.fillStyle = "#cccccc";
+      contexto.fillRect(0, 6, x, 2);
+      contexto.beginPath();
+      contexto.arc(x, 7, 5, 0, 2 * Math.PI);
+      contexto.fill();
     },
   };
 

@@ -280,16 +280,3 @@ function criarPintor2d(contexto) {
     },
   };
 }
-
-// Desenha poucas células (um ícone, uma barra) num canvas pequeno, no canvas 2D.
-function desenharPequeno(canvas, celulas, colunas, linhas, largura, altura) {
-  const escala = devicePixelRatio || 1;
-  canvas.width = Math.max(1, Math.round(largura * escala));
-  canvas.height = Math.max(1, Math.round(altura * escala));
-  canvas.style.width = largura + "px";
-  canvas.style.height = altura + "px";
-  const medida = { colunas, linhas, largura: largura / colunas, altura: altura / linhas, fonte: altura / linhas / alturaDaLinha, escala };
-  const pintor = criarPintor2d(canvas.getContext("2d"));
-  pintor.ajustar(medida);
-  pintor.desenhar(celulas, 0, medida);
-}
