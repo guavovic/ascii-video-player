@@ -7,9 +7,22 @@ Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos
 **[Experimente no navegador](https://guavovic.github.io/ascii-video-player/)**: escolha um vídeo do seu computador e ele toca ali mesmo, sem sair da sua máquina.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny, Sintel e Spring tocando em caracteres ASCII, em meio bloco e em braille" width="560"><br>
-  <sub>Vídeos do GIF: <a href="https://peach.blender.org">Big Buck Bunny</a> e <a href="https://durian.blender.org">Sintel</a> (licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>) e <a href="https://studio.blender.org/films/spring/">Spring</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), © Blender Foundation.</sub>
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny, Sintel e Spring tocando em caracteres ASCII, em meio bloco e em braille" width="100%">
 </p>
+
+**No terminal**, com a barra de progresso, a pausa e o pulo:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/terminal.gif" alt="O player tocando no terminal, pausando com a barra de progresso e pulando para a frente" width="100%">
+</p>
+
+**No navegador**, trocando entre ascii, pontilhado e contornos:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/navegador.gif" alt="A página do player no navegador, com cara de Prompt de Comando, trocando de estilo enquanto o vídeo toca" width="100%">
+</p>
+
+<sub>Vídeos dos GIFs: <a href="https://peach.blender.org">Big Buck Bunny</a> e <a href="https://durian.blender.org">Sintel</a> (licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>) e <a href="https://studio.blender.org/films/spring/">Spring</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), © Blender Foundation.</sub>
 
 ## Como foi feito
 
@@ -29,14 +42,14 @@ A terceira versão trouxe o que faltava para ser um player de verdade:
 - **Controles:** pausar, avançar e voltar, barra de progresso, começar de um ponto, repetir e legendas `.srt` por cima do vídeo.
 - **Outras fontes:** links de vídeo (e de sites como o YouTube, com o yt-dlp) e a câmera ao vivo, aberta pelo nome.
 - **Exportar:** o vídeo convertido vira uma página HTML que toca sozinha, num arquivo só.
-- **No navegador:** o mesmo núcleo em C# compilado para WebAssembly, numa página em que o vídeo nunca sai do computador.
+- **No navegador:** o mesmo núcleo em C# compilado para WebAssembly, numa página com cara de Prompt de Comando em que o vídeo nunca sai do computador. Toca arquivos e a câmera, e a placa de vídeo desenha (WebGL), o que aguenta até 500 colunas sem travar.
 - **Menos dados por quadro:** a cor parecida com a anterior é reaproveitada, o que corta cerca de 40% dos bytes enviados ao terminal sem diferença visível. O desempenho ao vivo aparece no título da janela.
 
 ## Tecnologias
 
 - **Aplicação:** .NET 10, System.CommandLine, sequências ANSI para cor e controle do terminal.
 - **Mídia:** FFmpeg para o vídeo e o áudio, OpenAL Soft (Silk.NET) para tocar o som e yt-dlp, opcional, para links de sites de vídeo.
-- **Navegador:** .NET para WebAssembly, canvas e o próprio `<video>` do navegador.
+- **Navegador:** .NET para WebAssembly, WebGL e o próprio `<video>` do navegador.
 - **Testes:** xUnit v3, Shouldly e BenchmarkDotNet.
 - **Entrega:** GitHub Actions com build e testes no Windows, no Linux e no macOS, Native AOT nas releases e GitHub Pages para o player no navegador.
 
