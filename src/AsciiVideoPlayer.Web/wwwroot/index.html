@@ -26,6 +26,8 @@
       <symbol id="i-pontilhado" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5" cy="5" r="1.6"/><circle cx="12" cy="5" r="1.6"/><circle cx="19" cy="5" r="1.6"/><circle cx="8.5" cy="12" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/><circle cx="5" cy="19" r="1.6"/><circle cx="12" cy="19" r="1.6"/><circle cx="19" cy="19" r="1.6"/></g></symbol>
       <symbol id="i-contornos" viewBox="0 0 24 24"><path d="M4 18l5-12 4 8 3-5 4 9" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
       <symbol id="i-colunas" viewBox="0 0 24 24"><path d="M4 5v14M9 5v14M14 5v14M19 5v14" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 7h4l2-3h6l2 3h4v13H3z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-trocar-camera" viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 3v5h-5M4 21v-5h5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
       <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6"/></symbol>
       <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85V21c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></symbol>
     </defs>
@@ -44,39 +46,43 @@
 <p>ascii-video-player [versão 3.0]
 Conversão em C# compilado para WebAssembly. O vídeo não sai do seu computador.</p>
 <p>C:\&gt; arraste um vídeo para esta janela, ou:</p>
-<p class="acoes"><label class="comando">[ abrir vídeo ]<input id="arquivo" type="file" accept="video/*" hidden></label>   <button id="exemplo" class="comando">[ ver o exemplo ]</button></p>
+<p class="acoes"><label class="comando">[ abrir vídeo ]<input id="arquivo" type="file" accept="video/*" hidden></label>   <button id="exemplo" class="comando">[ ver o exemplo ]</button>   <button id="usar-camera" class="comando">[ usar a câmera ]</button></p>
 <p id="carregando">Carregando o conversor...</p>
 <p>C:\&gt;<span class="cursor">_</span></p>
       </div>
-      <canvas id="tela" hidden></canvas>
+      <div id="quadro" hidden><canvas id="tela"></canvas></div>
     </main>
 
     <footer id="controles" hidden>
-      <div class="linha-tempo">
+      <div id="linha-tempo" class="linha-tempo">
         <span id="tempo">0:00</span>
-        <input id="posicao" type="range" min="0" max="1000" value="0" aria-label="Posição no vídeo">
+        <div id="posicao" class="barra" aria-label="Posição no vídeo"></div>
         <span id="duracao">0:00</span>
       </div>
       <div class="botoes">
         <div class="grupo">
-          <button class="icone estilo ativo" data-estilo="ascii" title="Estilo: ascii" aria-label="Estilo ascii"><svg><use href="#i-ascii"/></svg></button>
-          <button class="icone estilo" data-estilo="dither" title="Estilo: pontilhado" aria-label="Estilo pontilhado"><svg><use href="#i-pontilhado"/></svg></button>
-          <button class="icone estilo" data-estilo="edges" title="Estilo: contornos" aria-label="Estilo contornos"><svg><use href="#i-contornos"/></svg></button>
-          <button id="cor" class="icone ativo" title="Cor (C)" aria-label="Cor" aria-pressed="true"><svg><use href="#i-cor"/></svg></button>
+          <button class="icone estilo ativo" data-estilo="ascii" data-icone="ascii" title="Estilo: ascii" aria-label="Estilo ascii"></button>
+          <button class="icone estilo" data-estilo="dither" data-icone="pontilhado" title="Estilo: pontilhado" aria-label="Estilo pontilhado"></button>
+          <button class="icone estilo" data-estilo="edges" data-icone="contornos" title="Estilo: contornos" aria-label="Estilo contornos"></button>
+          <button id="cor" class="icone ativo" data-icone="cor" title="Cor (C)" aria-label="Cor" aria-pressed="true"></button>
         </div>
         <div class="grupo central">
-          <button id="voltar" class="icone" title="Voltar 1 s (←)" aria-label="Voltar 1 segundo"><svg><use href="#i-voltar"/></svg></button>
-          <button id="tocar" class="icone grande" title="Pausar (espaço)" aria-label="Pausar"><svg><use href="#i-pausar"/></svg></button>
-          <button id="avancar" class="icone" title="Avançar 1 s (→)" aria-label="Avançar 1 segundo"><svg><use href="#i-avancar"/></svg></button>
-          <button id="repetir" class="icone" title="Repetir (L)" aria-label="Repetir" aria-pressed="false"><svg><use href="#i-repetir"/></svg></button>
-          <button id="mudo" class="icone" title="Som (M)" aria-label="Som"><svg><use href="#i-som"/></svg></button>
-          <input id="volume" type="range" min="0" max="100" value="100" aria-label="Volume" title="Volume">
+          <button id="voltar" class="icone so-arquivo" data-icone="voltar" title="Voltar 1 s (←)" aria-label="Voltar 1 segundo"></button>
+          <button id="tocar" class="icone grande" data-icone="pausar" title="Pausar (espaço)" aria-label="Pausar"></button>
+          <button id="avancar" class="icone so-arquivo" data-icone="avancar" title="Avançar 1 s (→)" aria-label="Avançar 1 segundo"></button>
+          <button id="repetir" class="icone so-arquivo" data-icone="repetir" title="Repetir (L)" aria-label="Repetir" aria-pressed="false"></button>
+          <button id="mudo" class="icone so-arquivo" data-icone="som" title="Som (M)" aria-label="Som"></button>
+          <div id="volume" class="barra curta so-arquivo" aria-label="Volume"></div>
         </div>
         <div class="grupo">
-          <label class="colunas" title="Colunas (1 a 1000)"><svg class="icone-solto"><use href="#i-colunas"/></svg><input id="colunas" type="number" min="1" max="1000" value="120" aria-label="Colunas"></label>
-          <label class="icone" title="Legenda .srt" aria-label="Abrir legenda .srt"><svg><use href="#i-legenda"/></svg><input id="legenda" type="file" accept=".srt" hidden></label>
-          <button id="cheia" class="icone" title="Tela cheia (F)" aria-label="Tela cheia"><svg><use href="#i-cheia"/></svg></button>
-          <label class="icone" title="Abrir outro vídeo" aria-label="Abrir outro vídeo"><svg><use href="#i-abrir"/></svg><input id="outro" type="file" accept="video/*" hidden></label>
+          <span class="rotulo" data-icone="colunas" aria-hidden="true"></span>
+          <div id="colunas" class="barra curta" aria-label="Colunas"></div>
+          <output id="colunas-valor">120</output>
+          <label class="icone so-arquivo" data-icone="legenda" title="Legenda .srt" aria-label="Abrir legenda .srt"><input id="legenda" type="file" accept=".srt" hidden></label>
+          <button id="trocar-camera" class="icone" data-icone="trocar-camera" title="Trocar de câmera" aria-label="Trocar de câmera" hidden></button>
+          <button id="camera" class="icone" data-icone="camera" title="Câmera" aria-label="Câmera" aria-pressed="false"></button>
+          <button id="cheia" class="icone" data-icone="cheia" title="Tela cheia (F)" aria-label="Tela cheia"></button>
+          <label class="icone" data-icone="abrir" title="Abrir outro vídeo" aria-label="Abrir outro vídeo"><input id="outro" type="file" accept="video/*" hidden></label>
         </div>
       </div>
       <p id="credito" hidden>Exemplo: <a href="https://peach.blender.org">Big Buck Bunny</a>, © Blender Foundation, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
