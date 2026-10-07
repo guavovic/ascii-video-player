@@ -3,59 +3,85 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ASCII Video Player</title>
+  <title>ascii-video-player</title>
   <meta name="description" content="Toque um vídeo em caracteres coloridos, direto no navegador, sem instalar nada.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c0c0c'/%3E%3Ctext x='6' y='22' font-family='monospace' font-size='16' fill='%23e8e3d3'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0c0c'/%3E%3Cpath d='M6 10l7 6-7 6' stroke='%23cccccc' stroke-width='3' fill='none'/%3E%3Cpath d='M16 23h10' stroke='%23cccccc' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
-  <header>
-    <a class="marca" href="./">ascii-video-player</a>
-    <a href="https://github.com/guavovic/ascii-video-player">código no GitHub</a>
-  </header>
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-tocar" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
+      <symbol id="i-pausar" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></symbol>
+      <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" font-size="9" font-family="Consolas, monospace" text-anchor="middle" fill="currentColor">1</text></symbol>
+      <symbol id="i-avancar" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 3v5h-5" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" font-size="9" font-family="Consolas, monospace" text-anchor="middle" fill="currentColor">1</text></symbol>
+      <symbol id="i-repetir" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-som" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-mudo" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-cor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></symbol>
+      <symbol id="i-legenda" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 13h4M13 13h4M7 16h7" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-cheia" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-abrir" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-ascii" viewBox="0 0 24 24"><text x="12" y="17" font-size="15" font-weight="700" font-family="Consolas, monospace" text-anchor="middle" fill="currentColor">A</text></symbol>
+      <symbol id="i-pontilhado" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5" cy="5" r="1.6"/><circle cx="12" cy="5" r="1.6"/><circle cx="19" cy="5" r="1.6"/><circle cx="8.5" cy="12" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/><circle cx="5" cy="19" r="1.6"/><circle cx="12" cy="19" r="1.6"/><circle cx="19" cy="19" r="1.6"/></g></symbol>
+      <symbol id="i-contornos" viewBox="0 0 24 24"><path d="M4 18l5-12 4 8 3-5 4 9" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-colunas" viewBox="0 0 24 24"><path d="M4 5v14M9 5v14M14 5v14M19 5v14" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85V21c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></symbol>
+    </defs>
+  </svg>
 
-  <main>
-    <section id="palco">
-      <div id="inicio">
-        <h1>Seu vídeo em caracteres,<br>direto no navegador.</h1>
-        <p>Arraste um vídeo para cá, escolha um arquivo ou veja o exemplo.</p>
-        <div class="acoes">
-          <label class="botao principal">Escolher vídeo<input id="arquivo" type="file" accept="video/*" hidden></label>
-          <button id="exemplo" class="botao">Ver o exemplo</button>
-        </div>
-        <p class="nota">O vídeo não sai do seu computador. A conversão roda aqui mesmo, no mesmo código C# do player de terminal, compilado para WebAssembly.</p>
-        <p id="carregando" class="nota">Carregando o conversor…</p>
-      </div>
-      <canvas id="tela" hidden></canvas>
-    </section>
-
-    <div id="controles" hidden>
-      <div class="linha">
-        <button id="tocar" class="botao">pausar</button>
-        <span id="tempo">0:00 / 0:00</span>
-        <input id="posicao" type="range" min="0" max="1000" value="0" aria-label="Posição no vídeo">
-      </div>
-      <div class="linha">
-        <label>estilo
-          <select id="estilo">
-            <option value="ascii">ascii</option>
-            <option value="blocks">meio bloco</option>
-            <option value="braille">braille</option>
-            <option value="dither">pontilhado</option>
-            <option value="edges">contornos</option>
-          </select>
-        </label>
-        <label>colunas <input id="colunas" type="range" min="40" max="200" step="4" value="120"> <output id="colunas-valor">120</output></label>
-        <label><input id="cor" type="checkbox" checked> cor</label>
-        <label class="botao">legenda .srt<input id="legenda" type="file" accept=".srt" hidden></label>
-        <button id="cheia" class="botao">tela cheia</button>
-        <button id="trocar" class="botao">outro vídeo</button>
-      </div>
-      <p class="atalhos">espaço pausa · ← → 5 s · F tela cheia</p>
+  <div class="janela">
+    <div class="barra-de-titulo">
+      <span class="icone-janela" aria-hidden="true">&gt;_</span>
+      <span id="titulo" class="titulo">C:\ascii-video-player\ascii-video-player.exe</span>
+      <a class="botao-janela" href="https://github.com/guavovic/ascii-video-player" title="Código no GitHub" aria-label="Código no GitHub"><svg><use href="#i-github"/></svg></a>
+      <button id="fechar" class="botao-janela fechar" title="Fechar o vídeo" aria-label="Fechar o vídeo" hidden><svg><use href="#i-fechar"/></svg></button>
     </div>
 
-    <p id="credito" class="nota" hidden>Exemplo: <a href="https://peach.blender.org">Big Buck Bunny</a>, © Blender Foundation, licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
-  </main>
+    <main id="palco">
+      <div id="inicio" class="console">
+<p>ascii-video-player [versão 3.0]
+Conversão em C# compilado para WebAssembly. O vídeo não sai do seu computador.</p>
+<p>C:\&gt; arraste um vídeo para esta janela, ou:</p>
+<p class="acoes"><label class="comando">[ abrir vídeo ]<input id="arquivo" type="file" accept="video/*" hidden></label>   <button id="exemplo" class="comando">[ ver o exemplo ]</button></p>
+<p id="carregando">Carregando o conversor...</p>
+<p>C:\&gt;<span class="cursor">_</span></p>
+      </div>
+      <canvas id="tela" hidden></canvas>
+    </main>
+
+    <footer id="controles" hidden>
+      <div class="linha-tempo">
+        <span id="tempo">0:00</span>
+        <input id="posicao" type="range" min="0" max="1000" value="0" aria-label="Posição no vídeo">
+        <span id="duracao">0:00</span>
+      </div>
+      <div class="botoes">
+        <div class="grupo">
+          <button class="icone estilo ativo" data-estilo="ascii" title="Estilo: ascii" aria-label="Estilo ascii"><svg><use href="#i-ascii"/></svg></button>
+          <button class="icone estilo" data-estilo="dither" title="Estilo: pontilhado" aria-label="Estilo pontilhado"><svg><use href="#i-pontilhado"/></svg></button>
+          <button class="icone estilo" data-estilo="edges" title="Estilo: contornos" aria-label="Estilo contornos"><svg><use href="#i-contornos"/></svg></button>
+          <button id="cor" class="icone ativo" title="Cor (C)" aria-label="Cor" aria-pressed="true"><svg><use href="#i-cor"/></svg></button>
+        </div>
+        <div class="grupo central">
+          <button id="voltar" class="icone" title="Voltar 1 s (←)" aria-label="Voltar 1 segundo"><svg><use href="#i-voltar"/></svg></button>
+          <button id="tocar" class="icone grande" title="Pausar (espaço)" aria-label="Pausar"><svg><use href="#i-pausar"/></svg></button>
+          <button id="avancar" class="icone" title="Avançar 1 s (→)" aria-label="Avançar 1 segundo"><svg><use href="#i-avancar"/></svg></button>
+          <button id="repetir" class="icone" title="Repetir (L)" aria-label="Repetir" aria-pressed="false"><svg><use href="#i-repetir"/></svg></button>
+          <button id="mudo" class="icone" title="Som (M)" aria-label="Som"><svg><use href="#i-som"/></svg></button>
+          <input id="volume" type="range" min="0" max="100" value="100" aria-label="Volume" title="Volume">
+        </div>
+        <div class="grupo">
+          <label class="colunas" title="Colunas (1 a 1000)"><svg class="icone-solto"><use href="#i-colunas"/></svg><input id="colunas" type="number" min="1" max="1000" value="120" aria-label="Colunas"></label>
+          <label class="icone" title="Legenda .srt" aria-label="Abrir legenda .srt"><svg><use href="#i-legenda"/></svg><input id="legenda" type="file" accept=".srt" hidden></label>
+          <button id="cheia" class="icone" title="Tela cheia (F)" aria-label="Tela cheia"><svg><use href="#i-cheia"/></svg></button>
+          <label class="icone" title="Abrir outro vídeo" aria-label="Abrir outro vídeo"><svg><use href="#i-abrir"/></svg><input id="outro" type="file" accept="video/*" hidden></label>
+        </div>
+      </div>
+      <p id="credito" hidden>Exemplo: <a href="https://peach.blender.org">Big Buck Bunny</a>, © Blender Foundation, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+    </footer>
+  </div>
 
   <video id="video" playsinline preload="auto" hidden></video>
   <script src="desenho.js"></script>
