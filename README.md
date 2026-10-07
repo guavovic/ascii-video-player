@@ -7,16 +7,10 @@ Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos
 **[Experimente no navegador](https://guavovic.github.io/ascii-video-player/)**: escolha um vídeo do seu computador e ele toca ali mesmo, sem sair da sua máquina.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny, Sintel e Spring tocando em caracteres ASCII, em meio bloco e em braille" width="100%">
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny, Sintel e Spring tocando em ascii, contornos e pontilhado" width="100%">
 </p>
 
-**No terminal**, com a barra de progresso, a pausa e o pulo:
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/terminal.gif" alt="O player tocando no terminal, pausando com a barra de progresso e pulando para a frente" width="100%">
-</p>
-
-**No navegador**, trocando entre ascii, pontilhado e contornos:
+**O player**, trocando entre ascii, pontilhado e contornos:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/navegador.gif" alt="A página do player no navegador, com cara de Prompt de Comando, trocando de estilo enquanto o vídeo toca" width="100%">
