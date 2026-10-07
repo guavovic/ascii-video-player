@@ -73,7 +73,7 @@ svg { width: 20px; height: 20px; }
 #palco.arrastando { outline: 1px dashed var(--texto); outline-offset: -8px; }
 #palco:fullscreen { background: var(--fundo); }
 
-.console { place-self: start; width: 100%; padding: 8px 10px; }
+.console { grid-area: 1 / 1; place-self: start; width: 100%; padding: 8px 10px; }
 .console p { margin: 0 0 16px; white-space: pre-wrap; }
 
 .comando {

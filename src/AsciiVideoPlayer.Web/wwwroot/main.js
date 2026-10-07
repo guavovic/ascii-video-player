@@ -3,13 +3,14 @@ import { dotnet } from "./_framework/dotnet.js";
 const $ = id => document.getElementById(id);
 const palco = $("palco"), inicio = $("inicio"), tela = $("tela"), video = $("video");
 const controles = $("controles"), colunas = $("colunas"), posicao = $("posicao"), volume = $("volume");
-const contexto = tela.getContext("2d");
+const desenhista = criarDesenhista(tela);
+desenhista.camada.hidden = true;
 
 // O quadro do vídeo é desenhado num canvas do tamanho certo para o estilo, e os pixels vão para o C#.
 const amostra = document.createElement("canvas");
 const contextoDaAmostra = amostra.getContext("2d", { willReadFrequently: true });
 
-let nucleo, quadro = null, celula, ultimoTempo = -1, redesenhar = false, enderecoDoVideo = null, arrastandoPosicao = false;
+let nucleo, quadro = null, ultimoTempo = -1, redesenhar = false, enderecoDoVideo = null, arrastandoPosicao = false;
 let estilo = "ascii", comCor = true;
 
 const runtime = await dotnet.create();
@@ -52,7 +53,7 @@ function configurar() {
 
 function ajustar() {
   if (!quadro) return;
-  celula = ajustarCanvas(tela, contexto, quadro.colunas, quadro.linhas, palco.clientWidth - 16, palco.clientHeight - 16);
+  desenhista.ajustar(quadro.colunas, quadro.linhas, palco.clientWidth - 16, palco.clientHeight - 16);
   redesenhar = true;
 }
 
@@ -64,8 +65,8 @@ function desenhar() {
     contextoDaAmostra.drawImage(video, 0, 0, amostra.width, amostra.height);
     const rgba = contextoDaAmostra.getImageData(0, 0, amostra.width, amostra.height).data;
     const celulas = nucleo.Convert(new Uint8Array(rgba.buffer));
-    desenharCelulas(contexto, celulas, 0, quadro.colunas, quadro.linhas, celula);
-    desenharLegenda(contexto, nucleo.SubtitleAt(video.currentTime), quadro.colunas, quadro.linhas, celula);
+    desenhista.desenhar(celulas);
+    desenhista.legenda(nucleo.SubtitleAt(video.currentTime));
   }
   requestAnimationFrame(desenhar);
 }
@@ -90,7 +91,7 @@ function fechar() {
   video.removeAttribute("src");
   video.load();
   quadro = null;
-  tela.hidden = controles.hidden = $("fechar").hidden = true;
+  tela.hidden = desenhista.camada.hidden = controles.hidden = $("fechar").hidden = true;
   inicio.hidden = false;
   $("titulo").textContent = "C:\\ascii-video-player\\ascii-video-player.exe";
 }
@@ -110,7 +111,7 @@ function trocarSom() {
 
 video.addEventListener("loadedmetadata", () => {
   inicio.hidden = true;
-  tela.hidden = controles.hidden = $("fechar").hidden = false;
+  tela.hidden = desenhista.camada.hidden = controles.hidden = $("fechar").hidden = false;
   $("duracao").textContent = formatar(video.duration);
   configurar();
   video.play();
