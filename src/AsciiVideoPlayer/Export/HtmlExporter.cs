@@ -119,18 +119,18 @@ public sealed class HtmlExporter(AsciiConverter converter, bool color)
         output.Write(Convert.ToBase64String(data));
         output.Write("""
             ";
-            const tela = document.getElementById("tela"), contexto = tela.getContext("2d");
-            let quadros, atual = 0, tocando = true, relogio, celula;
+            const tela = document.getElementById("tela"), desenhista = criarDesenhista(tela);
+            let quadros, atual = 0, tocando = true, relogio;
 
             function ajustar() {
-              celula = ajustarCanvas(tela, contexto, colunas, linhas, innerWidth, innerHeight - 24);
+              desenhista.ajustar(colunas, linhas, innerWidth, innerHeight - 24);
             }
 
             function desenhar() {
-              desenharCelulas(contexto, quadros, atual * colunas * linhas * bytesPorCelula, colunas, linhas, celula);
+              desenhista.desenhar(quadros, atual * colunas * linhas * bytesPorCelula);
               const tempo = atual / fps;
               const ativa = legendas.find(([inicio, fim]) => tempo >= inicio && tempo < fim);
-              desenharLegenda(contexto, ativa?.[2], colunas, linhas, celula);
+              desenhista.legenda(ativa?.[2]);
               atual = (atual + 1) % total;
             }
 

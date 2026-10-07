@@ -2,17 +2,26 @@ using AsciiVideoPlayer.Video;
 
 namespace AsciiVideoPlayer.Ascii;
 
-// Cada célula é um caractere braille com 2×4 pontos. Sem pontilhado, o ponto acende acima do brilho médio do quadro;
-// com pontilhado (Floyd–Steinberg), o erro de cada ponto passa para os vizinhos e a densidade de pontos vira tom de cinza.
+// Cada célula é um caractere braille com 2×4 pontos. Sem pontilhado, o ponto acende acima do brilho médio do quadro.
+// Com pontilhado, cada ponto tem o seu limite numa matriz de Bayer 4×4, e a densidade de pontos vira tom de cinza.
+// O pontilhado ordenado não muda de um quadro para o outro onde a imagem está parada, então o vídeo não "ferve".
 public sealed class BrailleStyle(bool dither) : IImageStyle
 {
     private const char Blank = '⠀';
 
-    // Bit de cada ponto, na ordem [linha, coluna] da célula.
-    private static readonly int[,] DotBits = { { 0x01, 0x08 }, { 0x02, 0x10 }, { 0x04, 0x20 }, { 0x40, 0x80 } };
+    // Bit de cada ponto, linha por linha: (0,0) (1,0) / (0,1) (1,1) / (0,2) (1,2) / (0,3) (1,3).
+    private static readonly int[] DotBits = [0x01, 0x08, 0x02, 0x10, 0x04, 0x20, 0x40, 0x80];
+
+    // Limites da matriz de Bayer 4×4, em brilho de 0 a 255.
+    private static readonly int[] Bayer =
+    [
+        8, 136, 40, 168,
+        200, 72, 232, 104,
+        56, 184, 24, 152,
+        248, 120, 216, 88,
+    ];
 
     private int[] _luminance = [];
-    private bool[] _lit = [];
 
     public int PixelsPerColumn => 2;
     public int PixelsPerRow => 4;
@@ -20,91 +29,55 @@ public sealed class BrailleStyle(bool dither) : IImageStyle
     public void Convert(VideoFrame frame, AsciiImage image)
     {
         int count = frame.Width * frame.Height;
+        byte[] pixels = frame.Pixels;
 
         if (_luminance.Length != count)
-        {
             _luminance = new int[count];
-            _lit = new bool[count];
-        }
 
-        for (int i = 0; i < count; i++)
-            _luminance[i] = Rgb.Luminance(frame.Pixels, i);
-
-        if (dither)
-            Dither(frame.Width, frame.Height);
-        else
-            Threshold();
-
-        for (int row = 0; row < image.Height; row++)
-        {
-            for (int column = 0; column < image.Width; column++)
-                Fill(frame, image, row, column);
-        }
-    }
-
-    private void Threshold()
-    {
         long sum = 0;
 
-        foreach (int value in _luminance)
-            sum += value;
-
-        int average = (int)(sum / _luminance.Length);
-
-        for (int i = 0; i < _luminance.Length; i++)
-            _lit[i] = _luminance[i] > average;
-    }
-
-    private void Dither(int width, int height)
-    {
-        for (int y = 0; y < height; y++)
+        for (int i = 0, offset = 0; i < count; i++, offset += VideoFrame.BytesPerPixel)
         {
-            for (int x = 0; x < width; x++)
-            {
-                int i = y * width + x;
-                int value = _luminance[i];
-                _lit[i] = value >= 128;
-                int error = value - (_lit[i] ? 255 : 0);
+            int value = (pixels[offset] * 29 + pixels[offset + 1] * 150 + pixels[offset + 2] * 77) >> 8;
+            _luminance[i] = value;
+            sum += value;
+        }
 
-                if (x + 1 < width)
-                    _luminance[i + 1] += error * 7 / 16;
+        int average = count == 0 ? 0 : (int)(sum / count);
 
-                if (y + 1 < height)
-                {
-                    if (x > 0)
-                        _luminance[i + width - 1] += error * 3 / 16;
-
-                    _luminance[i + width] += error * 5 / 16;
-
-                    if (x + 1 < width)
-                        _luminance[i + width + 1] += error / 16;
-                }
-            }
+        for (int row = 0, cell = 0; row < image.Height; row++)
+        {
+            for (int column = 0; column < image.Width; column++, cell++)
+                Fill(frame, image, row, column, cell, average);
         }
     }
 
-    private void Fill(VideoFrame frame, AsciiImage image, int row, int column)
+    private void Fill(VideoFrame frame, AsciiImage image, int row, int column, int cell, int average)
     {
+        byte[] pixels = frame.Pixels;
+        int width = frame.Width;
         int bits = 0, red = 0, green = 0, blue = 0;
 
         for (int dotRow = 0; dotRow < 4; dotRow++)
         {
-            for (int dotColumn = 0; dotColumn < 2; dotColumn++)
-            {
-                int pixel = (row * 4 + dotRow) * frame.Width + column * 2 + dotColumn;
+            int y = row * 4 + dotRow;
+            int pixel = y * width + column * 2;
 
-                if (!_lit[pixel])
+            for (int dotColumn = 0; dotColumn < 2; dotColumn++, pixel++)
+            {
+                int threshold = dither ? Bayer[(y & 3) * 4 + (column * 2 + dotColumn & 3)] : average;
+
+                if (_luminance[pixel] <= threshold)
                     continue;
 
-                bits |= DotBits[dotRow, dotColumn];
+                bits |= DotBits[dotRow * 2 + dotColumn];
                 int offset = pixel * VideoFrame.BytesPerPixel;
-                blue += frame.Pixels[offset];
-                green += frame.Pixels[offset + 1];
-                red += frame.Pixels[offset + 2];
+                blue += pixels[offset];
+                green += pixels[offset + 1];
+                red += pixels[offset + 2];
             }
         }
 
-        int cell = row * image.Width + column;
         image.Characters[cell] = bits == 0 ? ' ' : (char)(Blank + bits);
         image.Colors[cell] = Rgb.AtFullBrightness(red, green, blue);
     }
