@@ -7,7 +7,7 @@ Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos
 **[Experimente no navegador](https://guavovic.github.io/ascii-video-player/)**: escolha um vídeo do seu computador e ele toca ali mesmo, sem sair da sua máquina.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny, Sintel e Spring tocando em ascii, contornos e pontilhado" width="100%">
+  <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny e Spring tocando em ascii, contornos e pontilhado" width="100%">
 </p>
 
 **O player**, trocando entre ascii, pontilhado e contornos:
@@ -16,7 +16,7 @@ Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos
   <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/navegador.gif" alt="A página do player no navegador, com cara de Prompt de Comando, trocando de estilo enquanto o vídeo toca" width="100%">
 </p>
 
-<sub>Vídeos dos GIFs: <a href="https://peach.blender.org">Big Buck Bunny</a> e <a href="https://durian.blender.org">Sintel</a> (licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>) e <a href="https://studio.blender.org/films/spring/">Spring</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), © Blender Foundation.</sub>
+<sub>Vídeos dos GIFs: <a href="https://peach.blender.org">Big Buck Bunny</a> (licença <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>) e <a href="https://studio.blender.org/films/spring/">Spring</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), © Blender Foundation.</sub>
 
 ## Como foi feito
 
