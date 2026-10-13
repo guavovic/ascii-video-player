@@ -11,6 +11,7 @@
     <RootNamespace>AsciiVideoPlayer</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PredefinedCulturesOnly>false</PredefinedCulturesOnly>
+    <ApplicationIcon>icone.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -24,6 +25,7 @@
     <RepositoryUrl>https://github.com/guavovic/ascii-video-player</RepositoryUrl>
     <PackageTags>ascii-art;terminal;video;ffmpeg;cli</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icone.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,6 +36,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="icone.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
