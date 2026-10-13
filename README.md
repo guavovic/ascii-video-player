@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/icone.svg" alt="" width="120">
+  <img src="docs/assets/icone.svg" alt="" width="160">
 </p>
 
 <h1 align="center">ASCII Video Player</h1>
