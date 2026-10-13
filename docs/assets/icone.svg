@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="#0c0c0c" stroke="#2ea043" stroke-width="4"/>
+  <g font-family="Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">
+    <text x="22" y="34" fill="#5b8bd6">:</text>
+    <text x="30" y="34" fill="#5b8bd6">o</text>
+    <text x="38" y="34" fill="#5b8bd6">*</text>
+    <text x="46" y="34" fill="#f6d36b">@</text>
+    <text x="54" y="34" fill="#f6d36b">@</text>
+    <text x="62" y="34" fill="#f6d36b">@</text>
+    <text x="70" y="34" fill="#f6d36b">8</text>
+    <text x="78" y="34" fill="#f6d36b">@</text>
+    <text x="86" y="34" fill="#5b8bd6">.</text>
+    <text x="94" y="34" fill="#5b8bd6">o</text>
+    <text x="102" y="34" fill="#5b8bd6">&amp;</text>
+    <text x="22" y="42" fill="#7a9ee0">&amp;</text>
+    <text x="30" y="42" fill="#7a9ee0">*</text>
+    <text x="38" y="42" fill="#f6d36b">&amp;</text>
+    <text x="46" y="42" fill="#f6d36b">@</text>
+    <text x="54" y="42" fill="#f6d36b">#</text>
+    <text x="62" y="42" fill="#f6d36b">@</text>
+    <text x="70" y="42" fill="#f6d36b">&amp;</text>
+    <text x="78" y="42" fill="#f6d36b">@</text>
+    <text x="86" y="42" fill="#f6d36b">@</text>
+    <text x="94" y="42" fill="#7a9ee0">o</text>
+    <text x="102" y="42" fill="#7a9ee0">.</text>
+    <text x="22" y="50" fill="#a7b6e8">&amp;</text>
+    <text x="30" y="50" fill="#a7b6e8">.</text>
+    <text x="38" y="50" fill="#f6d36b">&amp;</text>
+    <text x="46" y="50" fill="#f6d36b">@</text>
+    <text x="54" y="50" fill="#f6d36b">#</text>
+    <text x="62" y="50" fill="#f6d36b">@</text>
+    <text x="70" y="50" fill="#f6d36b">#</text>
+    <text x="78" y="50" fill="#f6d36b">8</text>
+    <text x="86" y="50" fill="#f6d36b">&amp;</text>
+    <text x="94" y="50" fill="#a7b6e8">o</text>
+    <text x="102" y="50" fill="#a7b6e8">.</text>
+    <text x="22" y="58" fill="#e8b98f">&amp;</text>
+    <text x="30" y="58" fill="#e8b98f">.</text>
+    <text x="38" y="58" fill="#f6d36b">8</text>
+    <text x="46" y="58" fill="#f6d36b">#</text>
+    <text x="54" y="58" fill="#f6d36b">@</text>
+    <text x="62" y="58" fill="#f6d36b">#</text>
+    <text x="70" y="58" fill="#f6d36b">8</text>
+    <text x="78" y="58" fill="#f6d36b">@</text>
+    <text x="86" y="58" fill="#f6d36b">@</text>
+    <text x="94" y="58" fill="#e8b98f">.</text>
+    <text x="102" y="58" fill="#e8b98f">&amp;</text>
+    <text x="22" y="66" fill="#f2a65a">.</text>
+    <text x="30" y="66" fill="#f2a65a">o</text>
+    <text x="38" y="66" fill="#f2a65a">*</text>
+    <text x="46" y="66" fill="#f6d36b">&amp;</text>
+    <text x="54" y="66" fill="#f6d36b">8</text>
+    <text x="62" y="66" fill="#f6d36b">&amp;</text>
+    <text x="70" y="66" fill="#f6d36b">&amp;</text>
+    <text x="78" y="66" fill="#f6d36b">8</text>
+    <text x="86" y="66" fill="#f2a65a">:</text>
+    <text x="94" y="66" fill="#f2a65a">o</text>
+    <text x="102" y="66" fill="#f2a65a">o</text>
+    <text x="22" y="74" fill="#57a84a">#</text>
+    <text x="30" y="74" fill="#3f8f3a">@</text>
+    <text x="38" y="74" fill="#57a84a">8</text>
+    <text x="46" y="74" fill="#3f8f3a">&amp;</text>
+    <text x="54" y="74" fill="#57a84a">8</text>
+    <text x="62" y="74" fill="#3f8f3a">&amp;</text>
+    <text x="70" y="74" fill="#57a84a">8</text>
+    <text x="78" y="74" fill="#3f8f3a">@</text>
+    <text x="86" y="74" fill="#57a84a">@</text>
+    <text x="94" y="74" fill="#3f8f3a">&amp;</text>
+    <text x="102" y="74" fill="#57a84a">#</text>
+    <text x="22" y="82" fill="#3f8f3a">8</text>
+    <text x="30" y="82" fill="#57a84a">#</text>
+    <text x="38" y="82" fill="#3f8f3a">&amp;</text>
+    <text x="46" y="82" fill="#57a84a">&amp;</text>
+    <text x="54" y="82" fill="#3f8f3a">@</text>
+    <text x="62" y="82" fill="#57a84a">@</text>
+    <text x="70" y="82" fill="#3f8f3a">8</text>
+    <text x="78" y="82" fill="#57a84a">8</text>
+    <text x="86" y="82" fill="#3f8f3a">8</text>
+    <text x="94" y="82" fill="#57a84a">&amp;</text>
+    <text x="102" y="82" fill="#3f8f3a">&amp;</text>
+  </g>
+  <path d="M24 98 L36 106 L24 114" fill="none" stroke="#2ea043" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="42" y="109" width="16" height="5" rx="1.5" fill="#2ea043"/>
+</svg>

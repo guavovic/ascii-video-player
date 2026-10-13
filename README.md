@@ -1,10 +1,27 @@
-# ASCII Video Player
+<p align="center">
+  <img src="docs/assets/icone.svg" alt="" width="120">
+</p>
 
-[![NuGet](https://img.shields.io/nuget/v/ascii-video-player?style=flat-square&label=NuGet&color=2ea043)](https://www.nuget.org/packages/ascii-video-player) [![Release](https://img.shields.io/github/v/release/guavovic/ascii-video-player?style=flat-square&label=release&color=2ea043)](https://github.com/guavovic/ascii-video-player/releases/latest) [![CI](https://img.shields.io/github/actions/workflow/status/guavovic/ascii-video-player/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/guavovic/ascii-video-player/actions/workflows/ci.yml) [![Licença](https://img.shields.io/github/license/guavovic/ascii-video-player?style=flat-square&label=licen%C3%A7a&color=2ea043)](LICENSE)
+<h1 align="center">ASCII Video Player</h1>
 
-Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos, ajustado ao tamanho da janela, com o áudio tocando junto. Roda no Windows, no Linux, no macOS e também no navegador, sem o vídeo sair da sua máquina.
+<p align="center">
+  <a href="https://www.nuget.org/packages/ascii-video-player"><img src="https://img.shields.io/nuget/v/ascii-video-player?style=flat-square&label=NuGet&color=2ea043" alt="NuGet"></a>
+  <a href="https://github.com/guavovic/ascii-video-player/releases/latest"><img src="https://img.shields.io/github/v/release/guavovic/ascii-video-player?style=flat-square&label=release&color=2ea043" alt="Release"></a>
+  <a href="https://github.com/guavovic/ascii-video-player/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/guavovic/ascii-video-player/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/guavovic/ascii-video-player?style=flat-square&label=licen%C3%A7a&color=2ea043" alt="Licença"></a>
+</p>
 
-**[Experimente no navegador](https://guavovic.github.io/ascii-video-player/)** · [Baixar](https://github.com/guavovic/ascii-video-player/releases/latest) · [NuGet](https://www.nuget.org/packages/ascii-video-player) · [Decisões de arquitetura](docs/decisions)
+<p align="center">Player de vídeo para o terminal. Cada quadro vira texto em caracteres coloridos, ajustado ao tamanho da janela, com o áudio tocando junto. Roda no Windows, no Linux, no macOS e também no navegador, sem o vídeo sair da sua máquina.</p>
+
+<p align="center">
+  <b><a href="https://guavovic.github.io/ascii-video-player/">Experimente no navegador</a></b>
+  &nbsp;•&nbsp;
+  <a href="https://github.com/guavovic/ascii-video-player/releases/latest">Baixar</a>
+  &nbsp;•&nbsp;
+  <a href="https://www.nuget.org/packages/ascii-video-player">NuGet</a>
+  &nbsp;•&nbsp;
+  <a href="docs/decisions">Decisões de arquitetura</a>
+</p>
 
 <img src="https://raw.githubusercontent.com/guavovic/ascii-video-player/main/docs/assets/ascii-video-player.gif" alt="Trechos de Big Buck Bunny e Spring tocando em ascii, contornos e pontilhado" width="100%">
 
