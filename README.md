@@ -16,10 +16,6 @@
 <p align="center">
   <b><a href="https://guavovic.github.io/ascii-video-player/">Experimente no navegador</a></b>
   &nbsp;•&nbsp;
-  <a href="https://github.com/guavovic/ascii-video-player/releases/latest">Baixar</a>
-  &nbsp;•&nbsp;
-  <a href="https://www.nuget.org/packages/ascii-video-player">NuGet</a>
-  &nbsp;•&nbsp;
   <a href="docs/decisions">Decisões de arquitetura</a>
 </p>
 
@@ -70,11 +66,9 @@ A primeira versão era um arquivo só, presa ao Windows, com o caminho do vídeo
 
 ## Tecnologias
 
-- **Aplicação:** .NET 10, System.CommandLine, sequências ANSI para cor e controle do terminal.
-- **Mídia:** FFmpeg para o vídeo e o áudio, OpenAL Soft (Silk.NET) para tocar o som e yt-dlp, opcional, para links de sites de vídeo.
-- **Navegador:** .NET para WebAssembly, WebGL e o próprio `<video>` do navegador.
-- **Testes:** xUnit v3, Shouldly e BenchmarkDotNet.
-- **Entrega:** GitHub Actions com build e testes no Windows, no Linux e no macOS, Native AOT nas releases e GitHub Pages para o player no navegador.
+- **Linguagem e framework:** C# com .NET 10.
+- **Plataformas:** Windows, Linux, macOS e navegador (WebAssembly com WebGL).
+- **Entrega:** binário nativo (Native AOT), pacote NuGet e GitHub Pages.
 
 ---
 
